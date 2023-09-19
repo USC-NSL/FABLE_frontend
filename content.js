@@ -5,8 +5,9 @@ chrome.runtime.onMessage.addListener(async function (message, sender, sendRespon
       const statusCode = message.statusCode;
       const currentTime = getCurrentTime(); // Get the current time
       const dnsResponseCode = await getDNSResponseCode(); // Get DNS response code
+      const pageLoadTime = message.pageLoadTime; // Get the page load time from the message
   
-      displayPopup(statusCode, currentTime, dnsResponseCode);
+      displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime);
     }
   });
   
@@ -33,9 +34,9 @@ chrome.runtime.onMessage.addListener(async function (message, sender, sendRespon
     }
   }
   
-  function displayPopup(statusCode, currentTime, dnsResponseCode) {
+  function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime) {
     const popupDiv = document.createElement('div');
-    popupDiv.innerHTML = `Current Time: ${currentTime}<br>HTTP Response Code: ${statusCode}<br>DNS Response Code: ${dnsResponseCode}`;
+    popupDiv.innerHTML = `Current Time: ${currentTime}<br>HTTP Response Code: ${statusCode}<br>DNS Response Code: ${dnsResponseCode}<br>Page Load Time: ${pageLoadTime.toFixed(2)} ms`;
     popupDiv.style.position = 'fixed';
     popupDiv.style.zIndex = 9999;
     popupDiv.style.top = '10px';

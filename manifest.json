@@ -6,8 +6,7 @@
     "permissions": [
       "activeTab",
       "webNavigation",
-      "webRequest",
-      "webRequestBlocking"
+      "webRequest"
     ],
     "background": {
       "service_worker": "background.js"
