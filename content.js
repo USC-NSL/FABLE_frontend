@@ -1,15 +1,41 @@
 // content.js
 
-chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(async function (message, sender, sendResponse) {
     if (message.action === 'showPopup') {
       const statusCode = message.statusCode;
-      displayPopup(statusCode);
+      const currentTime = getCurrentTime(); // Get the current time
+      const dnsResponseCode = await getDNSResponseCode(); // Get DNS response code
+  
+      displayPopup(statusCode, currentTime, dnsResponseCode);
     }
   });
   
-  function displayPopup(statusCode) {
+  function getCurrentTime() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  }
+  
+  async function getDNSResponseCode() {
+    try {
+      const response = await fetch('https://example.com', { method: 'HEAD', mode: 'no-cors' });
+      if (response) {
+        const dnsResponseCode = response.status;
+        return dnsResponseCode;
+      } else {
+        return 'Failed to fetch DNS response code';
+      }
+    } catch (error) {
+      console.error('DNS Response Code Check Error:', error);
+      return 'Failed to fetch DNS response code';
+    }
+  }
+  
+  function displayPopup(statusCode, currentTime, dnsResponseCode) {
     const popupDiv = document.createElement('div');
-    popupDiv.innerHTML = `HTTP Response Code: ${statusCode}`;
+    popupDiv.innerHTML = `Current Time: ${currentTime}<br>HTTP Response Code: ${statusCode}<br>DNS Response Code: ${dnsResponseCode}`;
     popupDiv.style.position = 'fixed';
     popupDiv.style.zIndex = 9999;
     popupDiv.style.top = '10px';
@@ -18,9 +44,10 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     popupDiv.style.border = '1px solid #ccc';
     popupDiv.style.padding = '10px';
     popupDiv.style.fontSize = '14px';
+    popupDiv.style.color = 'black';
     document.body.appendChild(popupDiv);
-    setTimeout(() => {
-      popupDiv.remove(); // Remove the popup after a few seconds (adjust as needed)
-    }, 5000); // Remove after 5 seconds (adjust as needed)
+    // setTimeout(() => {
+    //   popupDiv.remove();
+    // }, 5000);
   }
   
