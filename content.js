@@ -1,33 +1,26 @@
 // content.js
 
-// Function to display a popup based on HTTP status code
-function showPopup(statusCode) {
-    const popup = document.createElement('div');
-    popup.style.position = 'fixed';
-    popup.style.top = '0';
-    popup.style.right = '0';
-    popup.style.backgroundColor = 'white';
-    popup.style.border = '1px solid #ccc';
-    popup.style.padding = '10px';
-    popup.style.zIndex = '9999';
-  
-    if (statusCode === 200) {
-      popup.innerHTML = '<h1>Status: <span style="color: green;">Success</span></h1>';
-    } else {
-      popup.innerHTML = '<h1>Status: <span style="color: red;">Failure</span></h1>';
-    }
-  
-    document.body.appendChild(popup);
-  
-    // Close the popup after a few seconds (you can adjust the timeout)
-    setTimeout(() => {
-      document.body.removeChild(popup);
-    }, 5000);
-  }
-  
-  chrome.runtime.onMessage.addListener(function (message) {
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.action === 'showPopup') {
-      showPopup(message.statusCode);
+      const statusCode = message.statusCode;
+      displayPopup(statusCode);
     }
   });
+  
+  function displayPopup(statusCode) {
+    const popupDiv = document.createElement('div');
+    popupDiv.innerHTML = `HTTP Response Code: ${statusCode}`;
+    popupDiv.style.position = 'fixed';
+    popupDiv.style.zIndex = 9999;
+    popupDiv.style.top = '10px';
+    popupDiv.style.left = '10px';
+    popupDiv.style.backgroundColor = '#fff';
+    popupDiv.style.border = '1px solid #ccc';
+    popupDiv.style.padding = '10px';
+    popupDiv.style.fontSize = '14px';
+    document.body.appendChild(popupDiv);
+    setTimeout(() => {
+      popupDiv.remove(); // Remove the popup after a few seconds (adjust as needed)
+    }, 5000); // Remove after 5 seconds (adjust as needed)
+  }
   

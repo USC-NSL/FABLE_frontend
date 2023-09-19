@@ -9,12 +9,13 @@ chrome.webNavigation.onCompleted.addListener(async function (details) {
   
     // Perform HTTP status code check for the current tab's URL
     checkHttpStatus(url, function (statusCode) {
-      // Send a message to the content script to show the popup
+      // Send a message to the content script to show the popup with the response code
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         chrome.tabs.sendMessage(tabs[0].id, { action: 'showPopup', statusCode: statusCode });
       });
     });
   });
+  
   
   // Function to check HTTP status code
   async function checkHttpStatus(url, callback) {
@@ -39,5 +40,4 @@ chrome.webNavigation.onCompleted.addListener(async function (details) {
       callback(0); // 0 indicates an error
     }
   }
-  
   
