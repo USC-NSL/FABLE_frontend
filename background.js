@@ -11,29 +11,35 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 let pageLoadStartTime;
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
-    // Start measuring page load time
-    pageLoadStartTime = performance.now();
+    // Check if the URL is an internal Chrome page or a non-standard URL
+    if (!details.url.startsWith("chrome://")) {
+        // Start measuring page load time
+        pageLoadStartTime = performance.now();
+    }
 });
 
 chrome.webNavigation.onCompleted.addListener(async function(details) {
-    // Calculate and log the page load time
-    const pageLoadTime = calculatePageLoadTime();
+    // Check if the URL is an internal Chrome page or a non-standard URL
+    if (!details.url.startsWith("chrome://")) {
+        // Calculate and log the page load time
+        const pageLoadTime = calculatePageLoadTime();
 
-    // Perform HTTP status code check for the current tab's URL
-    const url = details.url;
-    checkHttpStatus(url, async function(statusCode) {
-        // Send a message to the content script to show the popup with the response code and page load time
-        chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
-            const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
-            chrome.tabs.sendMessage(tabs[0].id, {
-                action: 'showPopup',
-                statusCode: statusCode,
-                dnsResponseCode: dnsResponseCode,
-                pageLoadTime: pageLoadTime,
-                ttfb: ttfbValue 
+        // Perform HTTP status code check for the current tab's URL
+        const url = details.url;
+        checkHttpStatus(url, async function(statusCode) {
+            // Send a message to the content script to show the popup with the response code and page load time
+            chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
+                const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'showPopup',
+                    statusCode: statusCode,
+                    dnsResponseCode: dnsResponseCode,
+                    pageLoadTime: pageLoadTime,
+                    ttfb: ttfbValue 
+                });
             });
         });
-    });
+    }
 });
 
 
