@@ -9,6 +9,7 @@ const ttfb = getTTFB();
 chrome.runtime.sendMessage({ action: 'ttfb', value: ttfb });
 
 // Listener for messages from the background script
+// Listener for messages from the background script
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.action === 'showPopup') {
         const statusCode = message.statusCode;
@@ -16,10 +17,13 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         const dnsResponseCode = message.dnsResponseCode;
         const pageLoadTime = message.pageLoadTime;
         const ttfb = message.ttfb;  // TTFB data received from the message
+        const errorType = message.errorType;  // Error type received from the message
+        const errorDescription = message.errorDescription;  // Error description received from the message
 
-        displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb);
+        displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription);
     }
 });
+
 
 // Returns the current time in HH:MM:SS format
 function getCurrentTime() {
@@ -31,14 +35,17 @@ function getCurrentTime() {
 }
 
 // Displays the popup with various performance metrics
-function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb) {
+// Displays the popup with various performance metrics and error information
+function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription) {
     const popupDiv = document.createElement('div');
     popupDiv.innerHTML = `
         Current Time: ${currentTime}<br>
         HTTP Response Code: ${statusCode}<br>
         DNS Response Code: ${dnsResponseCode}<br>
         Page Load Time: ${pageLoadTime.toFixed(2)} ms<br>
-        TTFB: ${ttfb.toFixed(2)} ms`; // Display the TTFB in the popup
+        TTFB: ${ttfb.toFixed(2)} ms<br>
+        Error Type: ${errorType}<br>
+        Error Description: ${errorDescription}`; // Display error information in the popup
 
     popupDiv.style.position = 'fixed';
     popupDiv.style.zIndex = 9999;
@@ -52,3 +59,4 @@ function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, tt
     
     document.body.appendChild(popupDiv);
 }
+

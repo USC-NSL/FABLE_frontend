@@ -18,7 +18,52 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
     }
 });
 
-chrome.webNavigation.onCompleted.addListener(async function(details) {
+chrome.webNavigation.onErrorOccurred.addListener(function(details) {
+    // Check if the URL is an internal Chrome page or a non-standard URL
+    if (!details.url.startsWith("chrome://")) {
+        // Handle network errors
+        const errorType = details.error;
+        const errorDescription = getErrorDescription(errorType);
+
+        // Send a message to the content script to show the popup with error information
+        chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+                action: 'showPopup',
+                errorType: errorType,
+                errorDescription: errorDescription,
+                ttfb: ttfbValue,
+                dnsResponseCode: "N/A", // Since it's an error, DNS response code is not applicable
+                pageLoadTime: "N/A" // Since it's an error, page load time is not applicable
+            });
+        });
+    }
+});
+
+// Function to get a description of the network error
+function getErrorDescription(errorType) {
+    switch (errorType) {
+        case 'net::ERR_NAME_NOT_RESOLVED':
+            return 'DNS resolution failure';
+        case 'net::ERR_CONNECTION_TIMED_OUT':
+            return 'Connection timed out';
+        case 'net::ERR_CONNECTION_REFUSED':
+            return 'Connection refused';
+        case 'net::ERR_CONNECTION_RESET':
+            return 'Connection reset';
+        case 'net::ERR_SSL_PROTOCOL_ERROR':
+            return 'SSL protocol error';
+        case 'net::ERR_EMPTY_RESPONSE':
+            return 'Empty response received';
+        case 'net::ERR_BLOCKED_BY_CLIENT':
+            return 'Blocked by client (e.g., ad blocker)';
+        // Add more error types and descriptions as needed
+        default:
+            return 'Unknown error';
+    }
+}
+
+
+chrome.webNavigation.onCompleted.addListener(function(details) {
     // Check if the URL is an internal Chrome page or a non-standard URL
     if (!details.url.startsWith("chrome://")) {
         // Calculate and log the page load time
@@ -27,7 +72,7 @@ chrome.webNavigation.onCompleted.addListener(async function(details) {
         // Perform HTTP status code check for the current tab's URL
         const url = details.url;
         checkHttpStatus(url, async function(statusCode) {
-            // Send a message to the content script to show the popup with the response code and page load time
+            // Send a message to the content script to show the popup with the response code, page load time, DNS response code, and error information
             chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
                 const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
                 chrome.tabs.sendMessage(tabs[0].id, {
@@ -35,7 +80,9 @@ chrome.webNavigation.onCompleted.addListener(async function(details) {
                     statusCode: statusCode,
                     dnsResponseCode: dnsResponseCode,
                     pageLoadTime: pageLoadTime,
-                    ttfb: ttfbValue 
+                    ttfb: ttfbValue,
+                    errorType: "No Error",
+                    errorDescription: "No error occurred" // Display a message indicating no error
                 });
             });
         });
