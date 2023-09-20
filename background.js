@@ -30,7 +30,7 @@ chrome.webNavigation.onCompleted.addListener(async function(details) {
                 statusCode: statusCode,
                 dnsResponseCode: dnsResponseCode,
                 pageLoadTime: pageLoadTime,
-                ttfb: ttfbValue  // Send the stored TTFB value
+                ttfb: ttfbValue 
             });
         });
     });
