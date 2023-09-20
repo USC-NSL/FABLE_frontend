@@ -41,7 +41,7 @@ chrome.runtime.onMessage.addListener(async function (message, sender, sendRespon
     popupDiv.style.zIndex = 9999;
     popupDiv.style.top = '10px';
     popupDiv.style.left = '10px';
-    popupDiv.style.backgroundColor = '#fff';
+    popupDiv.style.backgroundColor = '#d1ffc4';
     popupDiv.style.border = '1px solid #ccc';
     popupDiv.style.padding = '10px';
     popupDiv.style.fontSize = '14px';
