@@ -17,6 +17,9 @@
             "js": ["content.js"]
         }
     ],
+    "action": {
+        "default_popup": "popup.html"
+    },
     "declarative_net_request": {
         "rule_resources": [
             {
