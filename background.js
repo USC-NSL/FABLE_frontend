@@ -1,5 +1,16 @@
 let ttfbValue = 0;  // Store the TTFB value received from content script
 
+let lastMetrics = {
+    statusCode: null,
+    currentTime: null,
+    dnsResponseCode: null,
+    pageLoadTime: null,
+    ttfb: null,
+    errorType: null,
+    errorDescription: null
+};
+
+
 // Listener for messages from the content script
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.action === 'ttfb') {
@@ -79,13 +90,41 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                     dnsResponseCode: dnsResponseCode,
                     pageLoadTime: pageLoadTime,
                     ttfb: ttfbValue,
+                    errorType: "(No network laskdjnayer errors)",
+                    errorDescription: "(No network layasdner errors)" // Display a message indicating no error
+                });
+                lastMetrics = {
+                    statusCode: statusCode,
+                    currentTime: getCurrentTime(),
+                    dnsResponseCode: dnsResponseCode,
+                    pageLoadTime: pageLoadTime,
+                    ttfb: ttfbValue,
                     errorType: "(No network layer errors)",
                     errorDescription: "(No network layer errors)" // Display a message indicating no error
-                });
+                };
+
+                console.log("Updated metrics:", lastMetrics);
+
+                chrome.tabs.sendMessage(tabs[0].id, lastMetrics);
             });
         });
     }
 });
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'getMetrics') {
+        sendResponse(lastMetrics);
+    }
+});
+
+
+function getCurrentTime() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
 
 // Function to calculate page load time
 function calculatePageLoadTime() {
@@ -116,6 +155,8 @@ async function checkHttpStatus(url, callback) {
 
 // Function to get DNS Response Code (simulating using a fetch to a known endpoint)
 async function getDNSResponseCode() {
+    console.log("Attempting to fetch DNS response code");
+
     try {
         const response = await fetch('https://example.com', { method: 'HEAD', mode: 'no-cors' });
         if (response) {

@@ -18,7 +18,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         const ttfb = message.ttfb;  // TTFB data received from the message
         const errorType = message.errorType;  // Error type received from the message
         const errorDescription = message.errorDescription;  // Error description received from the message
-
         displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription);
     }
 });
