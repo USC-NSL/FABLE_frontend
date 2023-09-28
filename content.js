@@ -32,44 +32,24 @@ function getCurrentTime() {
     return `${hours}:${minutes}:${seconds}`;
 }
 
-// Displays the popup with various performance metrics and error information
-// function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription) {
-//     const popupDiv = document.createElement('div');
-//     popupDiv.innerHTML = `
-//         Current Time: ${currentTime}<br>
-//         HTTP Response Code: ${statusCode}<br>
-//         DNS Response Code: ${dnsResponseCode}<br>
-//         Page Load Time: ${pageLoadTime.toFixed(2)} ms<br>
-//         TTFB: ${ttfb.toFixed(2)} ms<br>
-//         Error Type: ${errorType}<br>
-//         Error Description: ${errorDescription}`; // Display error information in the popup
-
-//     popupDiv.style.position = 'fixed';
-//     popupDiv.style.zIndex = 9999;
-//     popupDiv.style.top = '10px';
-//     popupDiv.style.left = '10px';
-//     popupDiv.style.backgroundColor = '#d1ffc4';
-//     popupDiv.style.border = '1px solid #ccc';
-//     popupDiv.style.padding = '10px';
-//     popupDiv.style.fontSize = '14px';
-//     popupDiv.style.color = 'black';
-    
-//     document.body.appendChild(popupDiv);
-// }
-
-// Displays the banner with various performance metrics and error information
 // Displays the banner with various performance metrics and error information
 function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription) {
     const bannerDiv = document.createElement('div');
 
     bannerDiv.innerHTML = `
-        <span>Current Time: ${currentTime}</span> |
-        <span>HTTP Response Code: ${statusCode}</span> |
-        <span>DNS Response Code: ${dnsResponseCode}</span> |
-        <span>Page Load Time: ${pageLoadTime.toFixed(2)} ms</span> |
-        <span>TTFB: ${ttfb.toFixed(2)} ms</span> |
-        <span>Error Type: ${errorType}</span> |
-        <span>Error Description: ${errorDescription}</span>`;
+        <div style="display: inline-block; white-space: nowrap;">
+            <span>Current Time: ${currentTime}</span> |
+            <span>HTTP Response Code: ${statusCode}</span> |
+            <span>DNS Response Code: ${dnsResponseCode}</span> |
+            <span>Page Load Time: ${pageLoadTime.toFixed(2)} ms</span> |
+            <span>TTFB: ${ttfb.toFixed(2)} ms</span> |
+            <span>Error Type: ${errorType}</span> |
+            <span>Error Description: ${errorDescription}</span>
+        </div>
+        <div style="float: right; display: inline-block; outline: none">
+        <a href="https://www.google.com" style="background-color: #4285F4; color: white; padding: 8px 20px; margin: 2px 10px 2px 0; text-decoration: none; border-radius: 5px; outline: none;">Go to fixed link</a>
+        <span style="cursor: pointer;" onclick="this.parentElement.parentElement.remove(); document.body.style.marginTop = '0'; outline: none">✕</span>
+        </div>`;
     
     bannerDiv.style.position = 'fixed';
     bannerDiv.style.zIndex = 9999;
@@ -81,14 +61,15 @@ function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, tt
     bannerDiv.style.padding = '10px';
     bannerDiv.style.fontSize = '14px';
     bannerDiv.style.color = 'black';
-    bannerDiv.style.whiteSpace = 'nowrap'; 
-    bannerDiv.style.overflowX = 'auto'; 
+    bannerDiv.style.overflow = 'hidden'; 
 
-    document.body.insertBefore(bannerDiv, document.body.firstChild); 
+    document.body.insertBefore(bannerDiv, document.body.firstChild);
 
     // After adding to the document, set the margin-top of the body to push content downwards.
     document.body.style.marginTop = `${bannerDiv.offsetHeight}px`;
 }
+
+
 
 
 
