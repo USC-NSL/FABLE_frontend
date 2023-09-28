@@ -99,8 +99,8 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                     // dnsResponseCode: dnsResponseCode,
                     pageLoadTime: pageLoadTime,
                     ttfb: ttfbValue,
-                    errorType: "(No network layer errors)",
-                    errorDescription: "(No network layer errors)" // Display a message indicating no error
+                    errorType: "(N/A)",
+                    errorDescription: "(N/A)" // Display a message indicating no error
                 };
 
                 console.log("Updated metrics:", lastMetrics);
