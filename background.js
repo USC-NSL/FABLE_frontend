@@ -13,7 +13,6 @@ let pageLoadStartTime;
 chrome.webNavigation.onCommitted.addListener(function(details) {
     // Check if the URL is an internal Chrome page or a non-standard URL
     if (!details.url.startsWith("chrome://")) {
-        // Start measuring page load time
         pageLoadStartTime = performance.now();
     }
 });
@@ -62,7 +61,6 @@ function getErrorDescription(errorType) {
     }
 }
 
-
 chrome.webNavigation.onCompleted.addListener(function(details) {
     // Check if the URL is an internal Chrome page or a non-standard URL
     if (!details.url.startsWith("chrome://")) {
@@ -81,14 +79,13 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                     dnsResponseCode: dnsResponseCode,
                     pageLoadTime: pageLoadTime,
                     ttfb: ttfbValue,
-                    errorType: "No Error",
-                    errorDescription: "No error occurred" // Display a message indicating no error
+                    errorType: "(No network layer errors)",
+                    errorDescription: "(No network layer errors)" // Display a message indicating no error
                 });
             });
         });
     }
 });
-
 
 // Function to calculate page load time
 function calculatePageLoadTime() {
