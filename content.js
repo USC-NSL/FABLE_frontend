@@ -13,12 +13,12 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.action === 'showPopup') {
         const statusCode = message.statusCode;
         const currentTime = getCurrentTime();
-        const dnsResponseCode = message.dnsResponseCode;
+        // const dnsResponseCode = message.dnsResponseCode;
         const pageLoadTime = message.pageLoadTime;
         const ttfb = message.ttfb;  // TTFB data received from the message
         const errorType = message.errorType;  // Error type received from the message
         const errorDescription = message.errorDescription;  // Error description received from the message
-        displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription);
+        displayPopup(statusCode, currentTime, pageLoadTime, ttfb, errorType, errorDescription);
     }
 });
 
@@ -32,14 +32,13 @@ function getCurrentTime() {
 }
 
 // Displays the banner with various performance metrics and error information
-function displayPopup(statusCode, currentTime, dnsResponseCode, pageLoadTime, ttfb, errorType, errorDescription) {
+function displayPopup(statusCode, currentTime, pageLoadTime, ttfb, errorType, errorDescription) {
     const bannerDiv = document.createElement('div');
 
     bannerDiv.innerHTML = `
         <div style="display: inline-block; white-space: nowrap;">
             <span>Current Time: ${currentTime}</span> |
             <span>HTTP Response Code: ${statusCode}</span> |
-            <span>DNS Response Code: ${dnsResponseCode}</span> |
             <span>Page Load Time: ${pageLoadTime.toFixed(2)} ms</span> |
             <span>TTFB: ${ttfb.toFixed(2)} ms</span> |
             <span>Error Type: ${errorType}</span> |

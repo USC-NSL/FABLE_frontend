@@ -5,7 +5,7 @@ function updatePopupContent() {
 
         document.getElementById('currentTime').textContent = metrics.currentTime || '-';
         document.getElementById('statusCode').textContent = metrics.statusCode || '-';
-        document.getElementById('dnsResponseCode').textContent = metrics.dnsResponseCode || '-';
+        // document.getElementById('dnsResponseCode').textContent = metrics.dnsResponseCode || '-';
         document.getElementById('pageLoadTime').textContent = metrics.pageLoadTime || '-';
         document.getElementById('ttfb').textContent = metrics.ttfb || '-';
         document.getElementById('errorType').textContent = metrics.errorType || '-';

@@ -3,7 +3,7 @@ let ttfbValue = 0;  // Store the TTFB value received from content script
 let lastMetrics = {
     statusCode: null,
     currentTime: null,
-    dnsResponseCode: null,
+    // dnsResponseCode: null,
     pageLoadTime: null,
     ttfb: null,
     errorType: null,
@@ -42,7 +42,7 @@ chrome.webNavigation.onErrorOccurred.addListener(function(details) {
                 errorType: errorType,
                 errorDescription: errorDescription,
                 ttfb: ttfbValue,
-                dnsResponseCode: "N/A", // Since it's an error, DNS response code is not applicable
+                // dnsResponseCode: "N/A", // Since it's an error, DNS response code is not applicable
                 pageLoadTime: "N/A" // Since it's an error, page load time is not applicable
             });
         });
@@ -83,11 +83,11 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
         checkHttpStatus(url, async function(statusCode) {
             // Send a message to the content script to show the popup with the response code, page load time, DNS response code, and error information
             chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
-                const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
+                // const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: 'showPopup',
                     statusCode: statusCode,
-                    dnsResponseCode: dnsResponseCode,
+                    // dnsResponseCode: dnsResponseCode,
                     pageLoadTime: pageLoadTime,
                     ttfb: ttfbValue,
                     errorType: "(No network laskdjnayer errors)",
@@ -96,7 +96,7 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
                 lastMetrics = {
                     statusCode: statusCode,
                     currentTime: getCurrentTime(),
-                    dnsResponseCode: dnsResponseCode,
+                    // dnsResponseCode: dnsResponseCode,
                     pageLoadTime: pageLoadTime,
                     ttfb: ttfbValue,
                     errorType: "(No network layer errors)",
