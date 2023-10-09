@@ -20,5 +20,30 @@ function updatePopupContent() {
     });
 }
 
+//soft 404
+
+// popup.js
+
+// Function to update the list of soft 404 URLs in the popup
+// function updateSoft404List() {
+//     const soft404List = document.getElementById('soft404List');
+//     soft404List.innerHTML = '';
+
+//     // Add each soft 404 URL to the list
+//     for (const url of soft404Urls) {
+//         const listItem = document.createElement('li');
+//         listItem.textContent = url;
+//         soft404List.appendChild(listItem);
+//     }
+// }
+
+// // Call the function to update the soft 404 list on popup open
+// updateSoft404List();
+
+// Rest of your popup.js code for displaying other performance metrics
+
+
 // Call the function on popup open
 updatePopupContent();
+
+

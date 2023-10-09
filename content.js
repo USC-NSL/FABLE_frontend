@@ -31,13 +31,7 @@ function getCurrentTime() {
     return `${hours}:${minutes}:${seconds}`;
 }
 
-// Displays the banner with various performance metrics and error information
-// Displays the banner with various performance metrics and error information
-// Displays the banner with various performance metrics and error information
-// Displays the banner with various performance metrics and error information
-// Displays the banner with various performance metrics and error information
-// Displays the banner with various performance metrics and error information
-// Displays the banner with various performance metrics and error information
+
 // Displays the banner with various performance metrics and error information
 function displayPopup(statusCode, currentTime, pageLoadTime, ttfb, errorType, errorDescription) {
     const bannerDiv = document.createElement('div');
@@ -77,6 +71,41 @@ function displayPopup(statusCode, currentTime, pageLoadTime, ttfb, errorType, er
         document.body.style.marginTop = '0';
     });
 }
+
+// soft 404
+
+// Function to check if two URLs redirect to the same place
+// async function checkRedirects() {
+//     const currentUrl = window.location.href;
+//     const targetUrl = 'https://bytes.usc.edu/cs102/';
+    
+//     // Fetch the final URLs after following redirects
+//     const currentFinalUrl = await getFinalUrl(currentUrl);
+//     const targetFinalUrl = await getFinalUrl(targetUrl);
+    
+//     // Check if the final URLs are the same
+//     if (currentFinalUrl === targetFinalUrl) {
+//         // Send a message to the background script indicating a potential soft 404
+//         chrome.runtime.sendMessage({ action: 'soft404', url: currentUrl });
+//     }
+// }
+
+// // Function to fetch the final URL after following redirects
+// async function getFinalUrl(url) {
+//     return new Promise((resolve) => {
+//         fetch(url, { method: 'HEAD', mode: 'no-cors' })
+//             .then((response) => {
+//                 resolve(response.url);
+//             })
+//             .catch(() => {
+//                 resolve(url);
+//             });
+//     });
+// }
+
+// // Call the checkRedirects function
+// checkRedirects();
+
 
 
 

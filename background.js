@@ -169,3 +169,16 @@ async function getDNSResponseCode() {
         return 'Failed to fetch DNS response code';
     }
 }
+
+//soft 404
+
+// Create an array to store URLs that lead to potential soft 404s
+// const soft404Urls = [];
+
+// chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+//     if (message.action === 'soft404') {
+//         // Store the URL that potentially leads to a soft 404
+//         soft404Urls.push(message.url);
+//     }
+// });
+
