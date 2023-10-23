@@ -81,35 +81,38 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
         // Perform HTTP status code check for the current tab's URL
         const url = details.url;
         checkHttpStatus(url, async function(statusCode) {
-            // Send a message to the content script to show the popup with the response code, page load time, DNS response code, and error information
-            chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
-                // const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    action: 'showPopup',
-                    statusCode: statusCode,
-                    // dnsResponseCode: dnsResponseCode,
-                    pageLoadTime: pageLoadTime,
-                    ttfb: ttfbValue,
-                    errorType: "(No network laskdjnayer errors)",
-                    errorDescription: "(No network layasdner errors)" // Display a message indicating no error
+            // Check if the status code is an error
+            if(statusCode >= 400) {  // Assuming 400 and above are error codes
+                chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
+                    // const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'showPopup',
+                        statusCode: statusCode,
+                        // dnsResponseCode: dnsResponseCode,
+                        pageLoadTime: pageLoadTime,
+                        ttfb: ttfbValue,
+                        errorType: "(Network layer errors)",
+                        errorDescription: "(Network layer errors)" 
+                    });
+                    lastMetrics = {
+                        statusCode: statusCode,
+                        currentTime: getCurrentTime(),
+                        // dnsResponseCode: dnsResponseCode,
+                        pageLoadTime: pageLoadTime,
+                        ttfb: ttfbValue,
+                        errorType: "(N/A)",
+                        errorDescription: "(N/A)" 
+                    };
+
+                    console.log("Updated metrics:", lastMetrics);
+
+                    chrome.tabs.sendMessage(tabs[0].id, lastMetrics);
                 });
-                lastMetrics = {
-                    statusCode: statusCode,
-                    currentTime: getCurrentTime(),
-                    // dnsResponseCode: dnsResponseCode,
-                    pageLoadTime: pageLoadTime,
-                    ttfb: ttfbValue,
-                    errorType: "(N/A)",
-                    errorDescription: "(N/A)" // Display a message indicating no error
-                };
-
-                console.log("Updated metrics:", lastMetrics);
-
-                chrome.tabs.sendMessage(tabs[0].id, lastMetrics);
-            });
+            }
         });
     }
 });
+
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'getMetrics') {
