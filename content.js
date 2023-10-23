@@ -75,36 +75,82 @@ function displayPopup(statusCode, currentTime, pageLoadTime, ttfb, errorType, er
 // soft 404
 
 // Function to check if two URLs redirect to the same place
-// async function checkRedirects() {
-//     const currentUrl = window.location.href;
-//     const targetUrl = 'https://bytes.usc.edu/cs102/';
-    
-//     // Fetch the final URLs after following redirects
-//     const currentFinalUrl = await getFinalUrl(currentUrl);
-//     const targetFinalUrl = await getFinalUrl(targetUrl);
-    
-//     // Check if the final URLs are the same
-//     if (currentFinalUrl === targetFinalUrl) {
-//         // Send a message to the background script indicating a potential soft 404
-//         chrome.runtime.sendMessage({ action: 'soft404', url: currentUrl });
-//     }
-// }
+async function checkRedirects() {
+    const currentUrl = window.location.href;
+    const targetUrl = 'https://bytes.usc.edu/xxxxxxxx/';
 
-// // Function to fetch the final URL after following redirects
-// async function getFinalUrl(url) {
-//     return new Promise((resolve) => {
-//         fetch(url, { method: 'HEAD', mode: 'no-cors' })
-//             .then((response) => {
-//                 resolve(response.url);
-//             })
-//             .catch(() => {
-//                 resolve(url);
-//             });
-//     });
-// }
+    console.log('Current URL:', currentUrl);
+    console.log('Target URL:', targetUrl);
+    
+    // Fetch the final URLs after following redirects
+    const currentFinalUrl = await getFinalUrl(currentUrl);
+    const targetFinalUrl = await getFinalUrl(targetUrl);
+    
+    console.log('Current Final URL:', currentFinalUrl);
+    console.log('Target Final URL:', targetFinalUrl);
 
-// // Call the checkRedirects function
-// checkRedirects();
+    // Check if the final URLs are the same
+    if (currentFinalUrl === targetFinalUrl) {
+        console.log('Soft 404 detected via redirect');
+        // Send a message to the background script indicating a potential soft 404
+        chrome.runtime.sendMessage({ action: 'soft404', url: currentUrl });
+    }
+}
+
+// do not issue duplicate requests for page we are looking at - getFinalUrl
+
+//show demo with test cases:
+// create webpage that redirects a b c-404
+// have broken image on webpage that 404s but the original webpage request works fine
+
+//adversarial test cases
+
+
+
+//timeouts:
+//put random ip address in the hostname
+
+//tls connection setup errors: certificate not valid
+
+
+
+
+// Function to fetch the final URL after following redirects
+async function getFinalUrl(url) {
+    return new Promise((resolve) => {
+        fetch(url, { method: 'HEAD', mode: 'no-cors' })
+            .then((response) => {
+                resolve(response.url);
+            })
+            .catch(() => {
+                resolve(url);
+            });
+    });
+}
+
+// Call the checkRedirects function
+checkRedirects();
+
+// content.js
+
+// Function to check if the current page is an error page
+function checkForErrorPage() {
+    const errorIndicators = ["cannot be found"];
+    //html of response - compare to original and new url
+    const pageContent = document.body.textContent;
+    for (const indicator of errorIndicators) {
+        if (pageContent.includes(indicator)) {
+            // Send a message to the background script indicating a potential soft 404
+            console.log('Soft 404 detected via page contents');
+            chrome.runtime.sendMessage({ action: 'soft404', url: window.location.href });
+            break;
+        }
+    }
+}
+
+// Call the checkForErrorPage function
+checkForErrorPage();
+
 
 
 

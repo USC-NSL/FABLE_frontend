@@ -25,20 +25,33 @@ function updatePopupContent() {
 // popup.js
 
 // Function to update the list of soft 404 URLs in the popup
-// function updateSoft404List() {
-//     const soft404List = document.getElementById('soft404List');
-//     soft404List.innerHTML = '';
+// popup.js
 
-//     // Add each soft 404 URL to the list
-//     for (const url of soft404Urls) {
-//         const listItem = document.createElement('li');
-//         listItem.textContent = url;
-//         soft404List.appendChild(listItem);
-//     }
-// }
+// Function to request soft 404 URLs from the background script
+function requestSoft404Urls() {
+    chrome.runtime.sendMessage({ action: 'getSoft404Urls' }, function (urls) {
+        console.log('Received Soft 404 URLs:', urls);
+        // Update the list of soft 404 URLs in the popup
+        updateSoft404List(urls);
+    });
+}
 
-// // Call the function to update the soft 404 list on popup open
-// updateSoft404List();
+// Function to update the list of soft 404 URLs in the popup
+function updateSoft404List(urls) {
+    const soft404List = document.getElementById('soft404List');
+    soft404List.innerHTML = '';
+
+    // Add each soft 404 URL to the list
+    for (const url of urls) {
+        const listItem = document.createElement('li');
+        listItem.textContent = url;
+        soft404List.appendChild(listItem);
+    }
+}
+
+// Call the function to request soft 404 URLs when the popup is opened
+requestSoft404Urls();
+
 
 // Rest of your popup.js code for displaying other performance metrics
 

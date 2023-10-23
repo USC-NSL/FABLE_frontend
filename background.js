@@ -170,15 +170,35 @@ async function getDNSResponseCode() {
     }
 }
 
+//taken  to the new location predicted by FABLE
+
+
 //soft 404
 
 // Create an array to store URLs that lead to potential soft 404s
-// const soft404Urls = [];
+// background.js
 
-// chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-//     if (message.action === 'soft404') {
-//         // Store the URL that potentially leads to a soft 404
-//         soft404Urls.push(message.url);
-//     }
-// });
+// Create an array to store URLs that lead to potential soft 404s
+const soft404Urls = [];
+
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    if (message.action === 'soft404') {
+        // Store the URL that potentially leads to a soft 404
+        soft404Urls.push(message.url);
+    }
+});
+
+// background.js
+
+// ... (previously defined soft404Urls and message listener)
+
+// Listen for requests for soft 404 URLs from the popup
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    if (message.action === 'getSoft404Urls') {
+        // Send the list of soft 404 URLs to the popup
+        sendResponse(soft404Urls);
+    }
+});
+
+
 
