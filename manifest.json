@@ -13,11 +13,7 @@
     },
     "content_scripts": [
         {
-            "matches": [
-                "https://bytes.usc.edu/*",
-                "https://www.tobyfenner.com/*",
-                "https://tobyfenner.vercel.app/*"
-            ],
+            "matches": ["<all_urls>"],
             "js": ["content.js"]
         }
     ],
