@@ -15,7 +15,8 @@
         {
             "matches": [
                 "https://bytes.usc.edu/*",
-                "https://www.tobyfenner.com/*"
+                "https://www.tobyfenner.com/*",
+                "https://tobyfenner.vercel.app/*"
             ],
             "js": ["content.js"]
         }

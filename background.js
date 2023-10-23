@@ -28,26 +28,6 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
     }
 });
 
-chrome.webNavigation.onErrorOccurred.addListener(function(details) {
-    // Check if the URL is an internal Chrome page or a non-standard URL
-    if (!details.url.startsWith("chrome://")) {
-        // Handle network errors
-        const errorType = details.error;
-        const errorDescription = getErrorDescription(errorType);
-
-        // Send a message to the content script to show the popup with error information
-        chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-                action: 'showPopup',
-                errorType: errorType,
-                errorDescription: errorDescription,
-                ttfb: ttfbValue,
-                // dnsResponseCode: "N/A", // Since it's an error, DNS response code is not applicable
-                pageLoadTime: "N/A" // Since it's an error, page load time is not applicable
-            });
-        });
-    }
-});
 
 // Function to get a description of the network error
 function getErrorDescription(errorType) {
@@ -72,46 +52,46 @@ function getErrorDescription(errorType) {
     }
 }
 
-chrome.webNavigation.onCompleted.addListener(function(details) {
-    // Check if the URL is an internal Chrome page or a non-standard URL
-    if (!details.url.startsWith("chrome://")) {
-        // Calculate and log the page load time
-        const pageLoadTime = calculatePageLoadTime();
 
-        // Perform HTTP status code check for the current tab's URL
+chrome.webNavigation.onErrorOccurred.addListener(function(details) {
+    // Check if it's the main frame and not an internal Chrome page or a non-standard URL
+    if (details.frameId === 0 && !details.url.startsWith("chrome://")) {
+        const errorType = details.error;
+        const errorDescription = getErrorDescription(errorType);
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+                action: 'showPopup',
+                errorType: errorType,
+                errorDescription: errorDescription,
+                ttfb: ttfbValue,
+                pageLoadTime: "N/A" // Since it's a network error, page load time might not be applicable
+            });
+        });
+    }
+});
+
+chrome.webNavigation.onCompleted.addListener(function(details) {
+    // Check if it's the main frame and not an internal Chrome page
+    if (details.frameId === 0 && !details.url.startsWith("chrome://")) {
         const url = details.url;
-        checkHttpStatus(url, async function(statusCode) {
-            // Check if the status code is an error
-            if(statusCode >= 400) {  // Assuming 400 and above are error codes
-                chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
-                    // const dnsResponseCode = await getDNSResponseCode();  // Fetching DNS Response Code
+        checkHttpStatus(url, function(statusCode) {
+            if (statusCode >= 400) {
+                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
                     chrome.tabs.sendMessage(tabs[0].id, {
                         action: 'showPopup',
                         statusCode: statusCode,
-                        // dnsResponseCode: dnsResponseCode,
-                        pageLoadTime: pageLoadTime,
+                        pageLoadTime: calculatePageLoadTime(),
                         ttfb: ttfbValue,
-                        errorType: "(Network layer errors)",
-                        errorDescription: "(Network layer errors)" 
+                        errorType: "(HTTP Error)",
+                        errorDescription: `HTTP ${statusCode} Error` 
                     });
-                    lastMetrics = {
-                        statusCode: statusCode,
-                        currentTime: getCurrentTime(),
-                        // dnsResponseCode: dnsResponseCode,
-                        pageLoadTime: pageLoadTime,
-                        ttfb: ttfbValue,
-                        errorType: "(N/A)",
-                        errorDescription: "(N/A)" 
-                    };
-
-                    console.log("Updated metrics:", lastMetrics);
-
-                    chrome.tabs.sendMessage(tabs[0].id, lastMetrics);
                 });
             }
         });
     }
 });
+
+
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
