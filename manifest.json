@@ -4,15 +4,16 @@
     "description": "Base Level Extension",
     "version": "1.0",
     "permissions": [
-        "activeTab",
+        "tabs",
         "webNavigation",
-        "declarativeNetRequest",
-        "notifications",
         "webRequest",
-        "<all_urls>"
+        "webRequestBlocking",
+        "declarativeNetRequest",
+        "https://dns.google/",
+        "*://*/*"
     ],
     "host_permissions": [
-        "<all_urls>"
+        "*://*/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -29,9 +30,9 @@
     "declarative_net_request": {
         "rule_resources": [
             {
-                "id": "myRuleSet",
-                "path": "rules.json",
-                "enabled": true
+                "id": "ruleset_1",
+                "enabled": true,
+                "path": "rules.json"
             }
         ]
     }

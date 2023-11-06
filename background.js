@@ -103,7 +103,6 @@ function somePatternThatIndicatesSoft404(url) {
     return !url.match(/\.\w+($|\?)/);
 }
 
-
 chrome.webNavigation.onErrorOccurred.addListener(function(details) {
     console.log(`Error occurred for url: ${details.url} with error: ${details.error}`);
     if (details.frameId === 0 && !details.url.startsWith("chrome://")) {
@@ -193,35 +192,48 @@ function calculatePageLoadTime() {
 async function checkHttpStatus(url, callback) {
     console.log(`Checking HTTP status for url: ${url}`);
     try {
-        const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
-        if (response) {
-            const statusCode = response.status;
-            callback(statusCode);
-        } else {
-            console.error('HTTP Status Code Check Error: Response is null or undefined');
-            callback(0);  // 0 indicates an error
-        }
+        // Perform the fetch without 'no-cors'
+        const response = await fetch(url, { method: 'HEAD' });
+        callback(response.status); // We can now read the status code directly
     } catch (error) {
         console.error('HTTP Status Code Check Error:', error);
-        callback(0);  // 0 indicates an error
+        callback(0); // 0 indicates an error
     }
 }
 
-// Function to get DNS Response Code (simulating using a fetch to a known endpoint)
-async function getDNSResponseCode() {
-    console.log(`Fetching DNS response code.`);
-    console.log("Attempting to fetch DNS response code");
+
+// Function to get DNS Response Code
+async function getDNSResponse(domain) {
+    console.log(`Fetching DNS response for domain: ${domain}`);
+    
+    // Extract hostname from URL
+    let hostname;
+    try {
+        const url = new URL(domain);
+        hostname = url.hostname;
+    } catch (error) {
+        console.error('Invalid URL:', domain);
+        return 'Invalid URL';
+    }
+
+    // Google's DNS resolution API endpoint
+    const googleDnsApi = `https://dns.google/resolve?name=${hostname}&type=A`;
 
     try {
-        const response = await fetch('https://example.com', { method: 'HEAD', mode: 'no-cors' });
-        if (response) {
-            return response.status;
+        const response = await fetch(googleDnsApi);
+        const data = await response.json();
+        if (data.Status === 0 && data.Answer.length > 0) {
+            // Status 0 means NOERROR, the DNS query completed successfully
+            console.log(`DNS response received for ${hostname}:`, data);
+            return 'DNS resolution successful';
         } else {
-            return 'Failed to fetch DNS response code';
+            // Other statuses indicate some sort of error in DNS resolution
+            console.log(`DNS resolution error for ${hostname}:`, data);
+            return 'DNS resolution failed';
         }
     } catch (error) {
-        console.error('DNS Response Code Check Error:', error);
-        return 'Failed to fetch DNS response code';
+        console.error('Error fetching DNS response:', error);
+        return 'Error fetching DNS response';
     }
 }
 
