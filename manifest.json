@@ -6,7 +6,13 @@
     "permissions": [
         "activeTab",
         "webNavigation",
-        "declarativeNetRequest"
+        "declarativeNetRequest",
+        "notifications",
+        "webRequest",
+        "<all_urls>"
+    ],
+    "host_permissions": [
+        "<all_urls>"
     ],
     "background": {
         "service_worker": "background.js"

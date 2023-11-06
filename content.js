@@ -135,18 +135,80 @@ checkRedirects();
 
 // Function to check if the current page is an error page
 function checkForErrorPage() {
-    const errorIndicators = ["cannot be found"];
-    //html of response - compare to original and new url
-    const pageContent = document.body.textContent;
-    for (const indicator of errorIndicators) {
-        if (pageContent.includes(indicator)) {
-            // Send a message to the background script indicating a potential soft 404
-            console.log('Soft 404 detected via page contents');
-            chrome.runtime.sendMessage({ action: 'soft404', url: window.location.href });
-            break;
-        }
+    const errorIndicators = [
+        "404",
+        "error 404",
+        "404 not found",
+        "error",
+        "page not found",
+        "we can't find the page",
+        "this page isn’t available",
+        "oops",
+        "the page you are looking for can't be found",
+        "something went wrong",
+        "we're sorry, but something went wrong",
+        "the page you requested does not exist",
+        "this page has gone missing",
+        "you seem to be trying to find his way home",
+        "this is somewhat embarrassing, isn’t it?",
+        "it looks like nothing was found at this location",
+        "the requested URL was not found on this server",
+        "the page you are looking for does not exist",
+        "the page you are looking for seems to be missing",
+        "this page is missing",
+        "looks like you have taken a wrong turn",
+        "dead link",
+        "the link you clicked may be broken",
+        "unable to find the page",
+        "we have encountered a problem",
+        "the resource you are looking for might have been removed",
+        "had its name changed",
+        "is temporarily unavailable",
+        "please try again later",
+        "error code: 404",
+        "HTTP 404",
+        "404 error",
+        "404 page",
+        "error page",
+        "invalid URL",
+        "file not found",
+        "broken link",
+        "this page doesn’t exist",
+        "address not found",
+        "this link isn’t working",
+        "no page here",
+        "why am I here?",
+        "404. That’s an error.",
+        "the requested resource is not available",
+        "there's nothing here",
+        "nothing to see here",
+        "page does not exist",
+        "gone",
+        "this URL is invalid",
+        "404’d",
+        "404. Page not found",
+        "404. This is not the web page you are looking for",
+        "we couldn’t find that page",
+        "404. Oops!",
+        "404 page not exist",
+        "404 not found error"
+    ];
+
+    const pageContent = document.body.textContent || document.body.innerText;
+    
+    // Find and log the matched indicator
+    const matchedIndicator = errorIndicators.find(indicator =>
+        pageContent.toLowerCase().includes(indicator.toLowerCase())
+    );
+
+    if (matchedIndicator) {
+        console.log(`Soft 404 detected via page contents: "${matchedIndicator}"`);
+        chrome.runtime.sendMessage({ action: 'soft404', url: window.location.href, message: matchedIndicator });
+    } else {
+        console.log('No soft 404 detected.');
     }
 }
+
 
 // Call the checkForErrorPage function
 checkForErrorPage();

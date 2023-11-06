@@ -13,7 +13,9 @@ let lastMetrics = {
 
 // Listener for messages from the content script
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    console.log(`Message received from content script: ${message.action}`);
     if (message.action === 'ttfb') {
+        console.log(`TTFB value received: ${message.value}`);
         ttfbValue = message.value;
     }
 });
@@ -22,8 +24,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 let pageLoadStartTime;
 
 chrome.webNavigation.onCommitted.addListener(function(details) {
-    // Check if the URL is an internal Chrome page or a non-standard URL
+    console.log(`Navigation committed for url: ${details.url}`);
     if (!details.url.startsWith("chrome://")) {
+        console.log(`Starting page load time measurement for url: ${details.url}`);
         pageLoadStartTime = performance.now();
     }
 });
@@ -31,6 +34,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 
 // Function to get a description of the network error
 function getErrorDescription(errorType) {
+    console.log(`Getting error description for error type: ${errorType}`);
     switch (errorType) {
         case 'net::ERR_NAME_NOT_RESOLVED':
             return 'DNS resolution failure';
@@ -48,16 +52,64 @@ function getErrorDescription(errorType) {
             return 'Blocked by client (e.g., ad blocker)';
         // Add more error types and descriptions as needed
         default:
+            console.log(`Unknown error type received: ${errorType}`);
             return 'Unknown error';
     }
 }
 
+//is this just html or e.g. js
+//no iframe but missing image or css file
+//focusing only on iframes may not be sufficient
+//debug console show on all places onERrorOccured is called 
+
+//webRequest.onErrorOccurred
+// Listener for errors on a per-resource basis
+chrome.webRequest.onErrorOccurred.addListener(
+    function (details) {
+        console.log(`Web request error: ${details.error} for url: ${details.url}`);
+
+        // Prepare the error details
+        const errorType = details.error;
+        const errorDescription = getResourceErrorDescription(errorType);
+
+        // Store the error information in lastMetrics or handle it as needed
+        lastMetrics.errorType = errorType;
+        lastMetrics.errorDescription = errorDescription;
+
+        // Here you can choose to send a message to the content script if needed,
+        // or you could just log the error, or store it for further processing.
+        // Example:
+        if (details.tabId > 0) {
+            chrome.tabs.sendMessage(details.tabId, {
+                action: 'logError',
+                errorType: errorType,
+                errorDescription: errorDescription
+            });
+        }
+
+        // If the error URL matches a specific pattern, you might consider it a soft 404
+        if (details.url && somePatternThatIndicatesSoft404(details.url)) {
+            soft404Urls.push(details.url);
+        }
+
+        // ... your additional logic for handling the error
+    },
+    { urls: ["<all_urls>"] } // Use appropriate filters as needed
+);
+
+// Helper function to determine soft 404 (this is a simple example, replace with your actual logic)
+function somePatternThatIndicatesSoft404(url) {
+    // Example: a URL that does not end with a file extension might be a dynamic page that could soft 404
+    return !url.match(/\.\w+($|\?)/);
+}
+
 
 chrome.webNavigation.onErrorOccurred.addListener(function(details) {
-    // Check if it's the main frame and not an internal Chrome page or a non-standard URL
+    console.log(`Error occurred for url: ${details.url} with error: ${details.error}`);
     if (details.frameId === 0 && !details.url.startsWith("chrome://")) {
         const errorType = details.error;
         const errorDescription = getErrorDescription(errorType);
+        console.log(`Sending error message to content script for url: ${details.url}`);
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             chrome.tabs.sendMessage(tabs[0].id, {
                 action: 'showPopup',
@@ -70,8 +122,23 @@ chrome.webNavigation.onErrorOccurred.addListener(function(details) {
     }
 });
 
+// This function will return a custom error description
+function getResourceErrorDescription(error) {
+    switch (error) {
+        case 'net::ERR_ABORTED':
+            return 'The request was aborted.';
+        case 'net::ERR_FAILED':
+            return 'The request failed.';
+        // ... (include other specific cases you want to handle)
+        default:
+            return 'An unknown error occurred.';
+    }
+}
+
 chrome.webNavigation.onCompleted.addListener(function(details) {
     // Check if it's the main frame and not an internal Chrome page
+    console.log('Navigation completed for:', details.url, 'in tab:', details.tabId, 'frame:', details.frameId);
+
     if (details.frameId === 0 && !details.url.startsWith("chrome://")) {
         const url = details.url;
         checkHttpStatus(url, function(statusCode) {
@@ -95,7 +162,9 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log(`Message received for action: ${message.action}`);
     if (message.action === 'getMetrics') {
+        console.log(`Sending metrics to content script.`);
         sendResponse(lastMetrics);
     }
 });
@@ -111,6 +180,7 @@ function getCurrentTime() {
 
 // Function to calculate page load time
 function calculatePageLoadTime() {
+    console.log(`Calculating page load time.`);
     if (pageLoadStartTime) {
         const pageLoadEndTime = performance.now();
         return pageLoadEndTime - pageLoadStartTime;
@@ -121,6 +191,7 @@ function calculatePageLoadTime() {
 
 // Function to check HTTP status code
 async function checkHttpStatus(url, callback) {
+    console.log(`Checking HTTP status for url: ${url}`);
     try {
         const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
         if (response) {
@@ -138,6 +209,7 @@ async function checkHttpStatus(url, callback) {
 
 // Function to get DNS Response Code (simulating using a fetch to a known endpoint)
 async function getDNSResponseCode() {
+    console.log(`Fetching DNS response code.`);
     console.log("Attempting to fetch DNS response code");
 
     try {
@@ -165,8 +237,9 @@ async function getDNSResponseCode() {
 const soft404Urls = [];
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    console.log(`Message received for action: ${message.action}`);
     if (message.action === 'soft404') {
-        // Store the URL that potentially leads to a soft 404
+        console.log(`Potential soft 404 detected for url: ${message.url}`);
         soft404Urls.push(message.url);
     }
 });
@@ -177,8 +250,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
 // Listen for requests for soft 404 URLs from the popup
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    console.log(`Message received for action: ${message.action}`);
     if (message.action === 'getSoft404Urls') {
-        // Send the list of soft 404 URLs to the popup
+        console.log(`Sending soft 404 URLs to the sender.`);
         sendResponse(soft404Urls);
     }
 });
