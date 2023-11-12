@@ -4,36 +4,28 @@
     "description": "Base Level Extension",
     "version": "1.0",
     "permissions": [
-        "tabs",
-        "webNavigation",
-        "webRequest",
-        "webRequestBlocking",
-        "declarativeNetRequest",
-        "https://dns.google/",
-        "*://*/*"
+      "activeTab",
+      "storage",
+      "webRequest",
+      "webNavigation",
+      "scripting",
+      "tabs"
     ],
     "host_permissions": [
-        "*://*/*"
+      "*://*/*"
     ],
     "background": {
-        "service_worker": "background.js"
+      "service_worker": "background.js"
     },
     "content_scripts": [
-        {
-            "matches": ["<all_urls>"],
-            "js": ["content.js"]
-        }
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "run_at": "document_start"
+      }
     ],
     "action": {
-        "default_popup": "popup.html"
-    },
-    "declarative_net_request": {
-        "rule_resources": [
-            {
-                "id": "ruleset_1",
-                "enabled": true,
-                "path": "rules.json"
-            }
-        ]
+      "default_popup": "popup.html"
     }
-}
+  }
+  
