@@ -35,6 +35,73 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     }
 });
 
+function performHeuristicScoring(url) {
+    let score = 0;
+
+    // Keywords in Title
+    let titleScore = document.title.includes('404') ? 3 : 0;
+    console.log('Title Score:', titleScore);
+    score += titleScore;
+
+    // Keywords in Content
+    let contentScore = contentHasKeywords(['Not Found', 'Error', '404']) ? 2 : 0;
+    console.log('Content Keywords Score:', contentScore);
+    score += contentScore;
+
+    // Extremely Sparse Content
+    let sparseScore = isContentSparse() ? 4 : 0;
+    console.log('Sparse Content Score:', sparseScore);
+    score += sparseScore;
+
+    // Mismatch Between URL Path and Content (Placeholder)
+    let urlMismatchScore = checkMismatchBetweenURLandContent(url);  // Currently not implemented
+    console.log('URL-Content Mismatch Score:', urlMismatchScore);
+    score += urlMismatchScore;
+
+    // Standard Error Page Elements (Placeholder)
+    let errorElementScore = checkForStandardErrorElements();  // Currently not implemented
+    console.log('Standard Error Elements Score:', errorElementScore);
+    score += errorElementScore;
+
+    // Unusual Redirects or Refreshes (Placeholder)
+    let redirectScore = checkForUnusualRedirectsOrRefreshes();  // Currently not implemented
+    console.log('Redirects/Refreshes Score:', redirectScore);
+    score += redirectScore;
+
+    // Send the score back to background.js
+    console.log('Total Heuristic Score:', score);
+    chrome.runtime.sendMessage({ action: 'displayPopupBasedOnScore', score: score });
+}
+
+function contentHasKeywords(keywords) {
+    const bodyText = document.body.innerText || "";
+    return keywords.some(keyword => bodyText.includes(keyword));
+}
+
+function checkMismatchBetweenURLandContent(url) {
+    console.log('Checking for mismatch between URL and content (not implemented)');
+    return 0; // Placeholder return
+}
+
+function checkForStandardErrorElements() {
+    console.log('Checking for standard error page elements (not implemented)');
+    return 0; // Placeholder return
+}
+
+function checkForUnusualRedirectsOrRefreshes() {
+    console.log('Checking for unusual redirects or refreshes (not implemented)');
+    return 0; // Placeholder return
+}
+
+// Receiving message to initiate scoring
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message.action === 'initiateScoring') {
+        // Log the URL received for scoring
+        console.log('Received initiateScoring message for URL:', message.url);
+        performHeuristicScoring(message.url);
+    }
+});
+
 function isContentSparse() {
     const bodyText = document.body.innerText || "";
     const minTextLength = 100; // define a threshold for text length
