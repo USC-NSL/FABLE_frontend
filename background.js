@@ -32,6 +32,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 });
 
 
+
 // Function to get a description of the network error
 function getErrorDescription(errorType) {
     console.log(`Getting error description for error type: ${errorType}`);
@@ -158,8 +159,6 @@ chrome.webNavigation.onCompleted.addListener(function(details) {
 });
 
 
-
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log(`Message received for action: ${message.action}`);
     if (message.action === 'getMetrics') {
@@ -200,7 +199,6 @@ async function checkHttpStatus(url, callback) {
         callback(0); // 0 indicates an error
     }
 }
-
 
 // Function to get DNS Response Code
 async function getDNSResponse(domain) {
