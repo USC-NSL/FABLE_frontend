@@ -1,8 +1,61 @@
 // background.js
 // console.log('Background script loaded');
+let redirectHistory = {};
+let tabStatusCodes = {};
+
+
+chrome.webRequest.onHeadersReceived.addListener(
+    function(details) {
+        if (details.type === "main_frame") {
+            tabStatusCodes[details.tabId] = details.statusCode;
+        }
+    },
+    { urls: ["<all_urls>"], types: ["main_frame"] },
+    ["responseHeaders"]
+);
+
+
+chrome.webRequest.onBeforeRedirect.addListener(
+    function(details) {
+        if (!redirectHistory[details.tabId]) {
+            redirectHistory[details.tabId] = [];
+        }
+
+        redirectHistory[details.tabId].push({ 
+            from: details.initiator, 
+            to: details.redirectUrl, 
+            timestamp: Date.now()
+        });
+    },
+    { urls: ["<all_urls>"] }, // You can narrow this down if needed
+    ["responseHeaders"]
+);
+
 
 // background.js
 let contentScriptsReadyTabs = new Set();
+
+function checkForUnusualRedirects(tabId) {
+    let history = redirectHistory[tabId];
+    if (!history || history.length < 2) return false; // Need at least 2 redirects to compare
+
+    // Example check: Rapid successive redirects
+    for (let i = 1; i < history.length; i++) {
+        if (history[i].timestamp - history[i - 1].timestamp < 1000) { // 1 second threshold
+            console.log('Unusual rapid redirects detected');
+            return true;
+        }
+    }
+
+    // Example check: Redirects to different domains
+    // Additional checks can be implemented as needed
+
+    return false;
+}
+
+chrome.tabs.onRemoved.addListener(function(tabId) {
+    delete redirectHistory[tabId];
+});
 
 
 // Listener for web requests starting
@@ -15,11 +68,9 @@ chrome.webRequest.onBeforeRequest.addListener(
 );
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    // Check if the tab is fully loaded
     if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith("chrome://")) {
         console.log('Tab load complete:', tab.url);
 
-        // Inject the content script
         chrome.scripting.executeScript({
             target: { tabId: tabId },
             files: ['content.js']
@@ -27,12 +78,18 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             if (chrome.runtime.lastError) {
                 console.error('Script injection failed:', chrome.runtime.lastError.message);
             } else {
-                console.log('Content script injected successfully for URL:', tab.url);
+                let statusCode = tabStatusCodes[tabId] || 0;
 
-                // Now, we can send the message to initiate scoring
-                // Note: You might want to add additional checks here based on your requirements
-                console.log('Initiating heuristic scoring for URL:', tab.url);
-                sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
+                // Check if the HTTP status is not in the 400-599 range
+                if (!(statusCode >= 400 && statusCode < 600)) {
+                    console.log('Initiating heuristic scoring for URL:', tab.url);
+                    sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
+                } else {
+                    console.log('Error status code detected, skipping heuristic scoring:', statusCode);
+                }
+
+                // Clear the stored status code for this tab
+                delete tabStatusCodes[tabId];
             }
         });
     }
