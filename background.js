@@ -3,6 +3,50 @@
 let redirectHistory = {};
 let tabStatusCodes = {};
 
+chrome.webRequest.onErrorOccurred.addListener(
+    function(details) {
+            console.log("Connection error detected:", details.error);
+            // Call to show browser popup directly
+            createNotification("Click to check for a fixed link using FABLE");
+        
+    },
+    { urls: ["<all_urls>"] }
+);
+
+// Function to create a browser notification
+function createNotification(message) {
+    currentNotificationId = "notification-" + (new Date()).getTime(); // Unique ID for the notification
+
+    chrome.notifications.create(currentNotificationId, {
+        type: "basic",
+        iconUrl: "error.png",  // Path to the icon
+        title: "Notification Title",
+        message: message,
+        // requireInteraction: true  // Notification stays until user interaction
+    });
+}
+
+// Listener for notification click event
+chrome.notifications.onClicked.addListener(function(clickedId) {
+    if (clickedId === currentNotificationId) {
+        chrome.tabs.create({ url: "https://www.google.com" }); // Opens a new tab with the specified URL
+        chrome.notifications.clear(clickedId); // Clear the notification after it's clicked
+    }
+});
+
+function showNotification(message) {
+    currentNotificationId = "notification-" + (new Date()).getTime(); // Unique ID for the notification
+
+    chrome.notifications.create(currentNotificationId, {
+        type: "basic",
+        iconUrl: "error.png",  // Path to the icon
+        title: "asdkjnasdkjnasdjknasdkjne",
+        message: message,
+        // requireInteraction: true  // Notification stays until user interaction
+    });
+
+}
+
 
 chrome.webRequest.onHeadersReceived.addListener(
     function(details) {
@@ -134,27 +178,43 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     }
 });
 
+// Global variable to keep track of the current notification ID
+let currentNotificationId = null;
+
 // Listener for showing browser notifications
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'showBrowserPopup') {
-        chrome.notifications.create({
-            type: "basic",
-            iconUrl: "error.png",  // Path to the icon
-            title: "FABLE assist",
-            message: message.message || "Default message",
-            requireInteraction: true  // Notification stays until user interaction
-        });
-
-        
-        // Listener for notification click event
-        chrome.notifications.onClicked.addListener(function(clickedId) {
-            if (clickedId === notificationId) {
-                chrome.tabs.create({ url: "https://www.google.com" }); // Opens a new tab with the specified URL
-                // chrome.notifications.clear(clickedId); // Optionally, clear the notification after it's clicked
-            }
-        });
+        // Clear existing notification if it exists
+        if (currentNotificationId) {
+            chrome.notifications.clear(currentNotificationId, () => {
+                createNotification(message);
+            });
+        } else {
+            createNotification(message);
+        }
     }
 });
+
+// function createNotification(message) {
+//     currentNotificationId = "notification-" + (new Date()).getTime(); // Unique ID for the notification
+
+//     chrome.notifications.create(currentNotificationId, {
+//         type: "basic",
+//         iconUrl: "error.png",  // Path to the icon
+//         title: "Notification Title",
+//         message: message.message || "Default message",
+//         // requireInteraction: true  // Notification stays until user interaction
+//     });
+
+//     // Listener for notification click event
+//     chrome.notifications.onClicked.addListener(function(clickedId) {
+//         if (clickedId === currentNotificationId) {
+//             chrome.tabs.create({ url: "https://www.google.com" }); // Opens a new tab with the specified URL
+//             chrome.notifications.clear(clickedId); // Optionally, clear the notification after it's clicked
+//         }
+//     });
+// }
+
 
 
 // Function to check HTTP status code

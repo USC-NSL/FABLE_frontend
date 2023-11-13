@@ -89,7 +89,7 @@ function performHeuristicScoring(url) {
     chrome.runtime.sendMessage({ action: 'displayPopupBasedOnScore', score: score });
 
     if (score === 0) {
-        requestBrowserPopup("Your custom message here");
+        requestBrowserPopup("Click to check for a fixed link using FABLE");
     }
     
 }
