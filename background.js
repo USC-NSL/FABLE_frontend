@@ -134,6 +134,29 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     }
 });
 
+// Listener for showing browser notifications
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message.action === 'showBrowserPopup') {
+        chrome.notifications.create({
+            type: "basic",
+            iconUrl: "error.png",  // Path to the icon
+            title: "FABLE assist",
+            message: message.message || "Default message",
+            requireInteraction: true  // Notification stays until user interaction
+        });
+
+        
+        // Listener for notification click event
+        chrome.notifications.onClicked.addListener(function(clickedId) {
+            if (clickedId === notificationId) {
+                chrome.tabs.create({ url: "https://www.google.com" }); // Opens a new tab with the specified URL
+                // chrome.notifications.clear(clickedId); // Optionally, clear the notification after it's clicked
+            }
+        });
+    }
+});
+
+
 // Function to check HTTP status code
 async function checkHttpStatus(url, callback) {
     console.log(`Checking HTTP status for url: ${url}`);

@@ -87,7 +87,18 @@ function performHeuristicScoring(url) {
     // Send the score back to background.js
     console.log('Total Heuristic Score:', score);
     chrome.runtime.sendMessage({ action: 'displayPopupBasedOnScore', score: score });
+
+    if (score === 0) {
+        requestBrowserPopup("Your custom message here");
+    }
+    
 }
+
+// Function to request a browser notification
+function requestBrowserPopup(message) {
+    chrome.runtime.sendMessage({ action: 'showBrowserPopup', message: message });
+}
+
 
 function contentHasKeywords(keywords) {
     const bodyText = document.body.innerText || "";

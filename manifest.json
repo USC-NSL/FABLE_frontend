@@ -9,7 +9,8 @@
       "webRequest",
       "webNavigation",
       "scripting",
-      "tabs"
+      "tabs",
+      "notifications"
     ],
     "host_permissions": [
       "*://*/*"
