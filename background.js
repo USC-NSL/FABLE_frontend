@@ -3,6 +3,8 @@
 let redirectHistory = {};
 let tabStatusCodes = {};
 let requestStartTimes = {};
+let requestTimers = {};
+
 
 
 chrome.webRequest.onErrorOccurred.addListener(
@@ -209,46 +211,31 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 chrome.webRequest.onBeforeRequest.addListener(
     function(details) {
         if (details.type === "main_frame") {
-            // Use requestStartTimes to store start time
-            requestStartTimes[details.requestId] = Date.now();
+            // Start a timer when a main frame request starts
+            const TIMEOUT_THRESHOLD = 8000; // e.g., 5 seconds
+            requestTimers[details.requestId] = setTimeout(() => {
+                chrome.tabs.get(details.tabId, tab => {
+                    if (!tab || tab.status !== 'complete') {
+                        createNotification("The page is taking too long to load.");
+                    }
+                });
+            }, TIMEOUT_THRESHOLD);
         }
     },
     { urls: ["<all_urls>"], types: ["main_frame"] }
 );
 
-// Listener for request completion
-chrome.webRequest.onCompleted.addListener(
-    function(details) {
-        checkRequestDuration(details);
-    },
-    { urls: ["<all_urls>"] }
-);
-
-// Listener for errors
-chrome.webRequest.onErrorOccurred.addListener(
-    function(details) {
-        checkRequestDuration(details);
-    },
-    { urls: ["<all_urls>"] }
-);
-
-// Check the duration of a request
-function checkRequestDuration(details) {
-    let startTime = requestStartTimes[details.requestId];
-    if (startTime) {
-        let duration = Date.now() - startTime;
-        console.log(`Request duration for ${details.url}: ${duration}ms`); // Print the load time
-        const TIMEOUT_THRESHOLD = 10000; // e.g., 30 seconds
-
-        if (duration > TIMEOUT_THRESHOLD) {
-            // Timeout detected, show browser notification
-            createNotification("A request took too long and might have timed out.");
-        }
-
-        // Clean up
-        delete requestStartTimes[details.requestId];
+// Listener for request completion or errors
+function clearTimerAndCheckDuration(details) {
+    let timerId = requestTimers[details.requestId];
+    if (timerId) {
+        clearTimeout(timerId); // Clear the timer
+        delete requestTimers[details.requestId]; // Remove the timer from the tracking object
     }
 }
+
+chrome.webRequest.onCompleted.addListener(clearTimerAndCheckDuration, { urls: ["<all_urls>"] });
+chrome.webRequest.onErrorOccurred.addListener(clearTimerAndCheckDuration, { urls: ["<all_urls>"] });
 
 // Function to check HTTP status code
 async function checkHttpStatus(url, callback) {
