@@ -41,6 +41,20 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     }
 });
 
+function checkForUnusualRedirects() {
+    const navigationEntries = performance.getEntriesByType("navigation");
+    let redirectScore = 0;
+
+    navigationEntries.forEach((entry, index) => {
+        if (index > 0 && navigationEntries[index - 1].name !== entry.name) {
+            // Each unique redirect adds a point
+            redirectScore += 1;
+        }
+    });
+
+    return redirectScore;
+}
+
 function performHeuristicScoring(url) {
     let score = 0;
 
@@ -64,15 +78,11 @@ function performHeuristicScoring(url) {
     console.log('URL-Content Mismatch Score:', urlMismatchScore);
     score += urlMismatchScore;
 
-    // Standard Error Page Elements (Placeholder)
-    let errorElementScore = checkForStandardErrorElements();  // Currently not implemented
-    console.log('Standard Error Elements Score:', errorElementScore);
-    score += errorElementScore;
-
     // Unusual Redirects or Refreshes (Placeholder)
-    let redirectScore = checkForUnusualRedirectsOrRefreshes();  // Currently not implemented
+    let redirectScore = checkForUnusualRedirects();
     console.log('Redirects/Refreshes Score:', redirectScore);
     score += redirectScore;
+
 
     // Send the score back to background.js
     console.log('Total Heuristic Score:', score);

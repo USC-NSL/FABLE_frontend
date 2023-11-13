@@ -35,24 +35,6 @@ chrome.webRequest.onBeforeRedirect.addListener(
 // background.js
 let contentScriptsReadyTabs = new Set();
 
-function checkForUnusualRedirects(tabId) {
-    let history = redirectHistory[tabId];
-    if (!history || history.length < 2) return false; // Need at least 2 redirects to compare
-
-    // Example check: Rapid successive redirects
-    for (let i = 1; i < history.length; i++) {
-        if (history[i].timestamp - history[i - 1].timestamp < 1000) { // 1 second threshold
-            console.log('Unusual rapid redirects detected');
-            return true;
-        }
-    }
-
-    // Example check: Redirects to different domains
-    // Additional checks can be implemented as needed
-
-    return false;
-}
-
 chrome.tabs.onRemoved.addListener(function(tabId) {
     delete redirectHistory[tabId];
 });
@@ -82,11 +64,11 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
                 // Check if the HTTP status is not in the 400-599 range
                 if (!(statusCode >= 400 && statusCode < 600)) {
-                    console.log('Initiating heuristic scoring for URL:', tab.url);
+                    console.log('Error code is OK so initiating heuristic scoring for URL:', tab.url);
                     sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
                 } else {
-                    console.log('Error status code detected, skipping heuristic scoring:', statusCode);
-                }
+                    console.log('Displaying popup due to error status code:', statusCode);
+                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup' });                }
 
                 // Clear the stored status code for this tab
                 delete tabStatusCodes[tabId];
