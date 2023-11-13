@@ -195,27 +195,50 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     }
 });
 
-// function createNotification(message) {
-//     currentNotificationId = "notification-" + (new Date()).getTime(); // Unique ID for the notification
 
-//     chrome.notifications.create(currentNotificationId, {
-//         type: "basic",
-//         iconUrl: "error.png",  // Path to the icon
-//         title: "Notification Title",
-//         message: message.message || "Default message",
-//         // requireInteraction: true  // Notification stays until user interaction
-//     });
+let requestStartTimes = {};
 
-//     // Listener for notification click event
-//     chrome.notifications.onClicked.addListener(function(clickedId) {
-//         if (clickedId === currentNotificationId) {
-//             chrome.tabs.create({ url: "https://www.google.com" }); // Opens a new tab with the specified URL
-//             chrome.notifications.clear(clickedId); // Optionally, clear the notification after it's clicked
-//         }
-//     });
-// }
+chrome.webRequest.onBeforeRequest.addListener(
+    function(details) {
+        if (details.type === "main_frame") {
+            tabLoadTimes[details.tabId] = { startTime: Date.now(), alerted: false };
+        }
+    },
+    { urls: ["<all_urls>"], types: ["main_frame"] }
+);
 
+// Listener for request completion
+chrome.webRequest.onCompleted.addListener(
+    function(details) {
+        checkRequestDuration(details);
+    },
+    { urls: ["<all_urls>"] }
+);
 
+// Listener for errors
+chrome.webRequest.onErrorOccurred.addListener(
+    function(details) {
+        checkRequestDuration(details);
+    },
+    { urls: ["<all_urls>"] }
+);
+
+// Check the duration of a request
+function checkRequestDuration(details) {
+    let startTime = requestStartTimes[details.requestId];
+    if (startTime) {
+        let duration = Date.now() - startTime;
+        const TIMEOUT_THRESHOLD = 30000; // e.g., 30 seconds
+
+        if (duration > TIMEOUT_THRESHOLD) {
+            // Timeout detected, show browser notification
+            showNotification("A request took too long and might have timed out.");
+        }
+
+        // Clean up
+        delete requestStartTimes[details.requestId];
+    }
+}
 
 // Function to check HTTP status code
 async function checkHttpStatus(url, callback) {
