@@ -2,29 +2,37 @@
 // console.log('Background script loaded');
 let redirectHistory = {};
 let tabStatusCodes = {};
+let requestStartTimes = {};
+
 
 chrome.webRequest.onErrorOccurred.addListener(
     function(details) {
+        if (details.type === "main_frame") {
             console.log("Connection error detected:", details.error);
             // Call to show browser popup directly
-            createNotification("Click to check for a fixed link using FABLE");
-        
+            createNotification("Click to check for a fixed link using FABLE");        
+        }
     },
     { urls: ["<all_urls>"] }
 );
 
 // Function to create a browser notification
 function createNotification(message) {
+    if (typeof message !== 'string') {
+        console.error('createNotification called with non-string message:', message);
+        return; // Exit the function if message is not a string
+    }
+
     currentNotificationId = "notification-" + (new Date()).getTime(); // Unique ID for the notification
 
     chrome.notifications.create(currentNotificationId, {
         type: "basic",
         iconUrl: "error.png",  // Path to the icon
         title: "Notification Title",
-        message: message,
-        // requireInteraction: true  // Notification stays until user interaction
+        message: message,  // Ensure this is a string
     });
 }
+
 
 // Listener for notification click event
 chrome.notifications.onClicked.addListener(function(clickedId) {
@@ -85,13 +93,13 @@ chrome.tabs.onRemoved.addListener(function(tabId) {
 
 
 // Listener for web requests starting
-chrome.webRequest.onBeforeRequest.addListener(
-    function(details) {
-        // console.log('Web request started for:', details.url, 'Type:', details.type, 'FrameID:', details.frameId);
-        // Additional logic can be added here if needed
-    },
-    { urls: ["<all_urls>"] }
-);
+// chrome.webRequest.onBeforeRequest.addListener(
+//     function(details) {
+//         // console.log('Web request started for:', details.url, 'Type:', details.type, 'FrameID:', details.frameId);
+//         // Additional logic can be added here if needed
+//     },
+//     { urls: ["<all_urls>"] }
+// );
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith("chrome://")) {
@@ -181,27 +189,28 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 // Global variable to keep track of the current notification ID
 let currentNotificationId = null;
 
-// Listener for showing browser notifications
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'showBrowserPopup') {
-        // Clear existing notification if it exists
+        if (typeof message.message !== 'string') {
+            console.error('Invalid message type for showBrowserPopup:', message.message);
+            return; // Exit if message is not a string
+        }
+
         if (currentNotificationId) {
             chrome.notifications.clear(currentNotificationId, () => {
-                createNotification(message);
+                createNotification(message.message);
             });
         } else {
-            createNotification(message);
+            createNotification(message.message);
         }
     }
 });
 
-
-let requestStartTimes = {};
-
 chrome.webRequest.onBeforeRequest.addListener(
     function(details) {
         if (details.type === "main_frame") {
-            tabLoadTimes[details.tabId] = { startTime: Date.now(), alerted: false };
+            // Use requestStartTimes to store start time
+            requestStartTimes[details.requestId] = Date.now();
         }
     },
     { urls: ["<all_urls>"], types: ["main_frame"] }
@@ -228,11 +237,12 @@ function checkRequestDuration(details) {
     let startTime = requestStartTimes[details.requestId];
     if (startTime) {
         let duration = Date.now() - startTime;
-        const TIMEOUT_THRESHOLD = 30000; // e.g., 30 seconds
+        console.log(`Request duration for ${details.url}: ${duration}ms`); // Print the load time
+        const TIMEOUT_THRESHOLD = 10000; // e.g., 30 seconds
 
         if (duration > TIMEOUT_THRESHOLD) {
             // Timeout detected, show browser notification
-            showNotification("A request took too long and might have timed out.");
+            createNotification("A request took too long and might have timed out.");
         }
 
         // Clean up
