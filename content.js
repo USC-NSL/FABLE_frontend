@@ -8,6 +8,12 @@
 //     }
 // });
 
+// Flag to indicate readiness
+window.isContentScriptReady = true;
+
+// Send a message back to background script to confirm readiness
+chrome.runtime.sendMessage({ action: 'contentScriptReady' });
+
 // content.js
 
 // content.js
@@ -99,7 +105,11 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         // Log the URL received for scoring
         console.log('Received initiateScoring message for URL:', message.url);
         performHeuristicScoring(message.url);
+        sendResponse({status: "Scoring initiated"});
+
     }
+    return true; // Important for asynchronous response
+
 });
 
 function isContentSparse() {

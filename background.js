@@ -2,6 +2,8 @@
 // console.log('Background script loaded');
 
 // background.js
+let contentScriptsReadyTabs = new Set();
+
 
 // Listener for web requests starting
 chrome.webRequest.onBeforeRequest.addListener(
@@ -12,50 +14,29 @@ chrome.webRequest.onBeforeRequest.addListener(
     { urls: ["<all_urls>"] }
 );
 
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    // Check if the tab is fully loaded
+    if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith("chrome://")) {
+        console.log('Tab load complete:', tab.url);
 
-chrome.webRequest.onCompleted.addListener(
-    function(details) {
-        // console.log('Web request completed for:', details.url, 'Type:', details.type, 'FrameID:', details.frameId, 'StatusCode:', details.statusCode);
-        if (details.type !== "main_frame") {
-            // console.log('Ignoring request - Not a main frame request:', details.url);
-        }
+        // Inject the content script
+        chrome.scripting.executeScript({
+            target: { tabId: tabId },
+            files: ['content.js']
+        }, () => {
+            if (chrome.runtime.lastError) {
+                console.error('Script injection failed:', chrome.runtime.lastError.message);
+            } else {
+                console.log('Content script injected successfully for URL:', tab.url);
 
-        if (details.frameId !== 0) {
-            // console.log('Ignoring request - Not top-level frame request:', details.url);
-        }
-
-        if (details.url.startsWith("chrome://")) {
-            // console.log('Ignoring request - Chrome internal page:', details.url);
-        }
-        if (details.type === "main_frame" && details.frameId === 0 && !details.url.startsWith("chrome://")) {
-            // console.log('Main frame load detected for:', details.url);
-
-            if (details.tabId > 0) {
-                // console.log('Injecting content script for URL:', details.url);
-                chrome.scripting.executeScript({
-                    target: { tabId: details.tabId },
-                    files: ['content.js']
-                }, () => {
-                    if (chrome.runtime.lastError) {
-                        // console.error('Script injection failed:', chrome.runtime.lastError.message);
-                    } else {
-                        // console.log('Content script injected successfully for URL:', details.url);
-
-                        if ((details.statusCode >= 400 && details.statusCode < 500) || (details.statusCode >= 500 && details.statusCode < 600)) {
-                            console.log('Detected a 4xx or 5xx error for main frame:', details.url);
-                            chrome.tabs.sendMessage(details.tabId, { action: 'displayPopup' });
-                        } else {
-                            console.log('Initiating heuristic scoring for URL:', details.url);
-                            chrome.tabs.sendMessage(details.tabId, { action: 'initiateScoring', url: details.url });
-                        }
-                    }
-                });
+                // Now, we can send the message to initiate scoring
+                // Note: You might want to add additional checks here based on your requirements
+                console.log('Initiating heuristic scoring for URL:', tab.url);
+                sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
             }
-        }
-    },
-    { urls: ["<all_urls>"] },
-    ["responseHeaders"]
-);
+        });
+    }
+});
 
 // Listener in background.js to receive messages from content.js
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
@@ -70,6 +51,38 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
     }
 });
+
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message.action === 'contentScriptReady' && sender.tab && sender.tab.id) {
+        contentScriptsReadyTabs.add(sender.tab.id);
+        console.log('Content script is ready in tab:', sender.tab.id);
+    }
+});
+
+// Function to send a message with retry logic
+// Function to send a message with retry logic
+function sendMessageWithRetry(tabId, message, retries = 5, interval = 500) {
+    if (retries === 0) {
+        console.log('Max retries reached for tab:', tabId);
+        return;
+    }
+
+    if (contentScriptsReadyTabs.has(tabId)) {
+        console.log('Sending message to tab:', tabId);
+        chrome.tabs.sendMessage(tabId, message, response => {
+            if (chrome.runtime.lastError) {
+                console.log('Error or no response from content script:', chrome.runtime.lastError.message);
+                setTimeout(() => sendMessageWithRetry(tabId, message, retries - 1, interval), interval);
+            } else {
+                // Handle response if necessary
+                console.log('Message sent successfully to tab:', tabId);
+            }
+        });
+    } else {
+        console.log(`Content script not ready in tab ${tabId}, retrying... (${retries} retries left)`);
+        setTimeout(() => sendMessageWithRetry(tabId, message, retries - 1, interval), interval);
+    }
+}
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'displayPopupBasedOnScore' && sender.tab) {
