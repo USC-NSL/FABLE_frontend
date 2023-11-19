@@ -9,13 +9,14 @@ chrome.webRequest.onErrorOccurred.addListener(
     function(details) {
         if (details.type === "main_frame") {
             console.log("Connection error detected:", details.error);
-            createNotification("Click to check for a fixed link using FABLE");        
+            const errorMessage = "Connection error detected: " + details.error; // Modify the message here
+            createNotification(errorMessage, "Click to check for a fixed link using FABLE."); // Set the title and message
         }
     },
     { urls: ["<all_urls>"] }
 );
 
-function createNotification(message) {
+function createNotification(message, title = "Notification Title") {
     if (typeof message !== 'string') {
         console.error('createNotification called with non-string message:', message);
         return; 
@@ -26,7 +27,7 @@ function createNotification(message) {
     chrome.notifications.create(currentNotificationId, {
         type: "basic",
         iconUrl: "error.png", 
-        title: "Notification Title",
+        title: title, 
         message: message, 
     });
 }
@@ -172,7 +173,7 @@ chrome.webRequest.onBeforeRequest.addListener(
             requestTimers[details.requestId] = setTimeout(() => {
                 chrome.tabs.get(details.tabId, tab => {
                     if (!tab || tab.status !== 'complete') {
-                        createNotification("The page is taking too long to load.");
+                        createNotification("The page is taking too long to load.", "Click to check for a fixed link using FABLE.");
                     }
                 });
             }, TIMEOUT_THRESHOLD);
@@ -202,21 +203,3 @@ async function checkHttpStatus(url, callback) {
         callback(0);
     }
 }
-
-// function isContentSparse() {
-//     const bodyText = document.body.innerText || "";
-//     const minTextLength = 100;
-//     const minElementCount = 10;
-//     const elementCount = document.body.getElementsByTagName('*').length;
-
-//     return bodyText.length < minTextLength && elementCount < minElementCount;
-// }
-
-// chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-//     if (message.action === 'checkForSparseContent') {
-//         console.error('cghecking for sparse content');
-//         if (isContentSparse()) {
-//             chrome.runtime.sendMessage({ action: 'displayPopup', reason: 'Sparse content detected' });
-//         }
-//     }
-// });

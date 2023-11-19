@@ -1,26 +1,14 @@
-window.isContentScriptReady = true;
+function initializeContentScript() {
+    window.isContentScriptReady = true;
+    chrome.runtime.sendMessage({ action: 'contentScriptReady' });
+}
 
-chrome.runtime.sendMessage({ action: 'contentScriptReady' });
+// Call the function to initialize the content script
+initializeContentScript();
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (message.action === 'checkTitleFor404') {
-        const pageTitle = document.title;
-        if (pageTitle.includes('404')) {
-            chrome.runtime.sendMessage({ action: 'displayPopupForTitle404' });
-        }
-    }
-    if (message.action === 'checkForSparseContent') {
-        if (isContentSparse()) {
-            chrome.runtime.sendMessage({ action: 'displayPopupForSparseContent' });
-        }
-    } else if (message.action === 'checkTitleFor404') {
-        const pageTitle = document.title;
-        if (pageTitle.includes('404')) {
-            chrome.runtime.sendMessage({ action: 'displayPopupForTitle404' });
-        }
-    }
-
     if (message.action === 'displayPopup') {
+        console.log('got message to dsiplay popup');
         displayPopup();
     }
 });
@@ -38,92 +26,83 @@ function checkForUnusualRedirects() {
     return redirectScore;
 }
 
-function performHeuristicScoring(url) {
-    let score = 0;
+// Function to check if a link is dead or alive
+async function checkLinkStatus(url) {
+    try {
+        const response = await fetch(url, { method: 'GET' });
+        const httpCode = response.status;
+        const effectiveUrl = response.url;
+        const effectiveUrlClean = cleanURL(effectiveUrl);
 
-    // Keywords in Title
-    let titleScore = document.title.includes('404') ? 3 : 0;
-    console.log('Title Score:', titleScore);
-    score += titleScore;
+        if (httpCode >= 400 && httpCode < 600) {
+            return true;
+        }
 
-    // Keywords in Content
-    let contentScore = contentHasKeywords(['Not Found', 'Error', '404']) ? 2 : 0;
-    console.log('Content Keywords Score:', contentScore);
-    score += contentScore;
+        if (checkRedirectTo404(effectiveUrlClean)) {
+            return true;
+        }
 
-    // Extremely Sparse Content
-    let sparseScore = isContentSparse() ? 4 : 0;
-    console.log('Sparse Content Score:', sparseScore);
-    score += sparseScore;
+        if (effectiveUrlClean !== cleanURL(url)) {
+            const possibleRoots = getDomainRoots(url);
+            if (possibleRoots.includes(effectiveUrlClean)) {
+                return true;
+            }
+        }
 
-    // Mismatch Between URL Path and Content (Placeholder)
-    let urlMismatchScore = checkMismatchBetweenURLandContent(url);  // Currently not implemented
-    console.log('URL-Content Mismatch Score:', urlMismatchScore);
-    score += urlMismatchScore;
+        if (httpCode === 0) {
+            return true;
+        }
 
-    // Unusual Redirects or Refreshes (Placeholder)
-    let redirectScore = checkForUnusualRedirects();
-    console.log('Redirects/Refreshes Score:', redirectScore);
-    score += redirectScore;
-
-    // Send the score back to background.js
-    console.log('Total Heuristic Score:', score);
-    chrome.runtime.sendMessage({ action: 'displayPopupBasedOnScore', score: score });
-
-    if (score === 5) {
-        requestBrowserPopup("Click to check for a fixed link using FABLE");
+        return false;
+    } catch (error) {
+        console.error("Fetch error: ", error.message);
+        return true;
     }
-    
 }
 
-function requestBrowserPopup(message) {
-    chrome.runtime.sendMessage({ action: 'showBrowserPopup', message: message });
+// Function to clean the URL (remove scheme, 'www', trailing slash)
+function cleanURL(url) {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.hostname.replace('www.', '') + urlObj.pathname.replace(/\/$/, '');
+    } catch (e) {
+        console.error("Invalid URL: ", url);
+        return '';
+    }
 }
 
-
-function contentHasKeywords(keywords) {
-    const bodyText = document.body.innerText || "";
-    return keywords.some(keyword => bodyText.includes(keyword));
+// Function to get domain roots for a given URL
+function getDomainRoots(url) {
+    try {
+        const urlObj = new URL(url);
+        return [urlObj.hostname.replace('www.', ''), urlObj.origin.replace(/^https?:\/\//, '').replace('www.', '')];
+    } catch (e) {
+        console.error("Invalid URL: ", url);
+        return [];
+    }
 }
 
-function checkMismatchBetweenURLandContent(url) {
-    console.log('Checking for mismatch between URL and content (not implemented)');
-    return 0; // Placeholder return
-}
-
-function checkForStandardErrorElements() {
-    console.log('Checking for standard error page elements (not implemented)');
-    return 0; // Placeholder return
-}
-
-function checkForUnusualRedirectsOrRefreshes() {
-    console.log('Checking for unusual redirects or refreshes (not implemented)');
-    return 0; // Placeholder return
+// Function to check if the effective URL indicates a 404 page
+function checkRedirectTo404(effectiveUrlClean) {
+    return /\/404.htm|\/404\/|notfound/i.test(effectiveUrlClean);
 }
 
 // Receiving message to initiate scoring
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'initiateScoring') {
         console.log('Received initiateScoring message for URL:', message.url);
-        performHeuristicScoring(message.url);
+        checkLinkStatus(message.url).then(isDead => {
+            if (isDead) {
+                console.log('Link is dead, displaying popup');
+                chrome.runtime.sendMessage({ action: 'displayPopup' });
+            } else {
+                console.log('Link is alive, no action required');
+            }
+        });
         sendResponse({status: "Scoring initiated"});
-
     }
     return true;
-
 });
-
-function isContentSparse() {
-    const bodyText = document.body.innerText || "";
-    const minTextLength = 1000;
-    const minElementCount = 400;
-    const elementCount = document.body.getElementsByTagName('*').length;
-
-    console.log(bodyText.length);
-    console.log(elementCount);
-
-    return bodyText.length < minTextLength || elementCount < minElementCount;
-}
 
 function displayPopup() {
     console.log("Content Script: Displaying popup");
