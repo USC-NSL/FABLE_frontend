@@ -1,0 +1,40 @@
+/* popup.css */
+#BANNERID {
+    position: relative;
+    width: 100%;
+    background-color: #F9F9F9;
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+    font-size: 17px;
+    color: black;
+    overflow: hidden;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+#BANNERID div {
+    display: flex;
+    align-items: center;
+    height: 35px;
+}
+
+#BANNERID span {
+    margin-left: 10px;
+}
+
+#BANNERID a {
+    background-color: #4285F4;
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    outline: none;
+    margin-right: 5px;
+}
+
+#BANNERID #closeBanner {
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+/* Additional styles for specific elements inside the popup can be added here */

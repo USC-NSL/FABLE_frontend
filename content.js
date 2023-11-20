@@ -14,6 +14,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 function checkForUnusualRedirects() {
+    console.log('check for unusal redirects');
+
     const navigationEntries = performance.getEntriesByType("navigation");
     let redirectScore = 0;
 
@@ -28,6 +30,8 @@ function checkForUnusualRedirects() {
 
 // Function to check if a link is dead or alive
 async function checkLinkStatus(url) {
+    console.log('check link status');
+
     try {
         const response = await fetch(url, { method: 'GET' });
         const httpCode = response.status;
@@ -62,6 +66,8 @@ async function checkLinkStatus(url) {
 
 // Function to clean the URL (remove scheme, 'www', trailing slash)
 function cleanURL(url) {
+    console.log('clean url');
+
     try {
         const urlObj = new URL(url);
         return urlObj.hostname.replace('www.', '') + urlObj.pathname.replace(/\/$/, '');
@@ -73,6 +79,7 @@ function cleanURL(url) {
 
 // Function to get domain roots for a given URL
 function getDomainRoots(url) {
+    console.log('get domain roots');
     try {
         const urlObj = new URL(url);
         return [urlObj.hostname.replace('www.', ''), urlObj.origin.replace(/^https?:\/\//, '').replace('www.', '')];
@@ -84,6 +91,7 @@ function getDomainRoots(url) {
 
 // Function to check if the effective URL indicates a 404 page
 function checkRedirectTo404(effectiveUrlClean) {
+    console.log('check redirect to 404');
     return /\/404.htm|\/404\/|notfound/i.test(effectiveUrlClean);
 }
 
@@ -103,10 +111,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     }
     return true;
 });
-
 function displayPopup() {
     console.log("Content Script: Displaying popup");
-  
+
     const bannerDiv = document.createElement('div');
     bannerDiv.id = "BANNERID";
 
@@ -121,24 +128,31 @@ function displayPopup() {
         </div>
     </div>`;
 
-    bannerDiv.style.position = 'fixed';
-    bannerDiv.style.zIndex = 9999;
-    bannerDiv.style.top = '0';
-    bannerDiv.style.left = '0';
-    bannerDiv.style.right = '0';
+    // Apply styles directly in JavaScript
+    bannerDiv.style.position = 'relative';
+    bannerDiv.style.width = '100%';
     bannerDiv.style.backgroundColor = '#F9F9F9';
     bannerDiv.style.borderBottom = '1px solid #ccc';
     bannerDiv.style.padding = '10px';
     bannerDiv.style.fontSize = '17px';
     bannerDiv.style.color = 'black';
     bannerDiv.style.overflow = 'hidden';
+    bannerDiv.style.boxSizing = 'border-box'; // Ensure padding is included in width
+
+    // Event listener for closing the banner
+    bannerDiv.querySelector("#closeBanner").addEventListener("click", function() {
+        document.body.style.marginTop = ''; // Reset the body's margin-top
+        document.body.removeChild(bannerDiv);
+    });
 
     if (document.body) {
+        document.body.style.marginTop = bannerDiv.offsetHeight + 'px';
         document.body.insertBefore(bannerDiv, document.body.firstChild);
     } else {
         const observer = new MutationObserver(() => {
             if (document.body) {
                 observer.disconnect();
+                document.body.style.marginTop = bannerDiv.offsetHeight + 'px';
                 document.body.insertBefore(bannerDiv, document.body.firstChild);
             }
         });

@@ -4,6 +4,12 @@ let requestStartTimes = {};
 let requestTimers = {};
 let contentScriptsReadyTabs = new Set();
 
+const goodHttpCodes = [
+    100, 101, 102, 103,
+    200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
+    250, 300, 301, 302, 303, 304, 305, 306, 307, 308,
+];
+
 
 chrome.webRequest.onErrorOccurred.addListener(
     function(details) {
@@ -82,18 +88,22 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             } else {
                 let statusCode = tabStatusCodes[tabId] || 0;
 
-                if (!(statusCode >= 400 && statusCode < 600)) {
-                    console.log('Error code is OK so initiating heuristic scoring for URL:', tab.url);
-                    sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
+                // Check if status code is not in the list of good HTTP codes
+                if (!goodHttpCodes.includes(statusCode)) {
+                    console.log('Bad status code detected:', statusCode);
+                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup' });
                 } else {
-                    console.log('Displaying popup due to error status code:', statusCode);
-                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup' });                }
+                    console.log('Good status code, checking for soft 404:', statusCode);
+                    sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
+
+                }
 
                 delete tabStatusCodes[tabId];
             }
         });
     }
-});
+}); 
+
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'displayPopupForTitle404' && sender.tab) {
