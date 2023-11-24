@@ -48,7 +48,10 @@ chrome.notifications.onClicked.addListener(function(clickedId) {
 chrome.webRequest.onHeadersReceived.addListener(
     function(details) {
         if (details.type === "main_frame") {
+            console.log(`[Headers Received] Main frame status code for tab ${details.tabId}:`, details.statusCode);
             tabStatusCodes[details.tabId] = details.statusCode;
+        } else {
+            console.log(`[Headers Received] Ignoring non-main frame type for tab ${details.tabId}:`, details.type);
         }
     },
     { urls: ["<all_urls>"], types: ["main_frame"] },
@@ -76,8 +79,13 @@ chrome.tabs.onRemoved.addListener(function(tabId) {
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    console.log(`[Tab Updated] Tab update for ${tabId}, Status: ${changeInfo.status}, URL: ${tab.url}`);
     if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith("chrome://")) {
-        console.log('Tab load complete:', tab.url);
+        if (tabStatusCodes.hasOwnProperty(tabId)) {
+
+        let statusCode = tabStatusCodes[tabId];
+        console.log(`[Tab Updated] Status code for main frame in tab ${tabId}:`, statusCode);
+
 
         chrome.scripting.executeScript({
             target: { tabId: tabId },
@@ -86,32 +94,38 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             if (chrome.runtime.lastError) {
                 console.error('Script injection failed:', chrome.runtime.lastError.message);
             } else {
-                let statusCode = tabStatusCodes[tabId] || 0;
+                // let statusCode = tabStatusCodes[tabId] || 0;
 
                 // Check if status code is not in the list of good HTTP codes
                 if (!goodHttpCodes.includes(statusCode)) {
                     console.log('Bad status code detected:', statusCode);
-                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup' });
+                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup' }); // send popup message
                 } else {
                     console.log('Good status code, checking for soft 404:', statusCode);
                     sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
-
                 }
 
                 delete tabStatusCodes[tabId];
             }
         });
+    } else {
+        console.log(`[Tab Updated] Ignoring incomplete load or chrome URL for tab ${tabId}`);
     }
-}); 
+}
+});
+
 
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'displayPopupForTitle404' && sender.tab) {
+        console.log('Bad status code TITLE:', statusCode);
         chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
     }
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    console.log('Bad status code SPARSE OR TITEL?:', statusCode);
+
     if ((message.action === 'displayPopupForSparseContent' || message.action === 'displayPopupForTitle404') && sender.tab) {
         chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
     }
@@ -125,6 +139,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 function sendMessageWithRetry(tabId, message, retries = 5, interval = 500) {
+    console.log(`[Send Message] Attempting to send message to tab ${tabId}, Retries left: ${retries}`);
+
     if (retries === 0) {
         console.log('Max retries reached for tab:', tabId);
         return;

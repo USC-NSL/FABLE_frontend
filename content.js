@@ -43,12 +43,14 @@ async function checkLinkStatus(url) {
         }
 
         if (checkRedirectTo404(effectiveUrlClean)) {
+            console.log('checkrediectto404 returned TRUE');
             return true;
         }
 
         if (effectiveUrlClean !== cleanURL(url)) {
             const possibleRoots = getDomainRoots(url);
             if (possibleRoots.includes(effectiveUrlClean)) {
+                console.log('looked at the roots and TRUE');
                 return true;
             }
         }
@@ -89,11 +91,11 @@ function getDomainRoots(url) {
     }
 }
 
-// Function to check if the effective URL indicates a 404 page
 function checkRedirectTo404(effectiveUrlClean) {
     console.log('check redirect to 404');
-    return /\/404.htm|\/404\/|notfound/i.test(effectiveUrlClean);
+    return /\/404.htm|\/404\/|notfound|notfoundsoft/i.test(effectiveUrlClean);
 }
+
 
 // Receiving message to initiate scoring
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
