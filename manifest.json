@@ -4,10 +4,7 @@
     "description": "Base Level Extension",
     "version": "1.1",
     "permissions": [
-      "activeTab",
-      "storage",
       "webRequest",
-      "webNavigation",
       "scripting",
       "tabs",
       "notifications"
@@ -19,7 +16,11 @@
       "service_worker": "background.js"
     },
     "action": {
-      "default_popup": "popup.html"
+      "default_popup": "popup.html",
+      "default_icon": {
+        "19": "1.png",
+        "38": "2.png"
+      }
     }
   }
   

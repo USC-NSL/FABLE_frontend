@@ -36,6 +36,15 @@ function createNotification(message, title = "Notification Title") {
         title: title, 
         message: message, 
     });
+
+    chrome.action.setBadgeBackgroundColor({ color: [200, 0, 0, 255] }, function() {
+        console.log('Badge background color set to dark red');
+    });
+    
+
+    chrome.action.setBadgeText({ text: 'FIX' }, function() {
+        console.log('Badge text set to "NEW"');
+    });
 }
 
 chrome.notifications.onClicked.addListener(function(clickedId) {

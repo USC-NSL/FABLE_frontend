@@ -6,25 +6,55 @@
         body {
             width: 200px;
             font-family: Arial, sans-serif;
+            color: black;
+            background-color: white;
+            border: 1px solid black;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: black;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #333;
         }
     </style>
 </head>
 <body>
     <div id="popupContent">
-        <h2>Performance Metrics</h2>
-        <div>Current Time: <span id="currentTime">-</span></div>
-        <div>HTTP Response Code: <span id="statusCode">-</span></div>
-        <!-- <div>DNS Response Code: <span id="dnsResponseCode">-</span></div> -->
-        <div>Page Load Time: <span id="pageLoadTime">-</span></div>
-        <div>TTFB: <span id="ttfb">-</span></div>
-        <div>Network Layer Error Type: <span id="errorType">-</span></div>
-        <div>Network Layer Error Desc: <span id="errorDescription">-</span></div>
-        <h2>Soft 404 Redirects</h2>
-        <ul id="soft404List">
-            <!-- List of URLs potentially leading to soft 404s -->
-        </ul>
+        <h2>This link is broken</h2>
+        <p>Do you want to check for a fixed link using FABLE?</p>
+        <button class="button" id="fixedLinkButton">Go to Fixed Link</button>
     </div>
     
     <script src="popup.js"></script>
+    <script>
+        document.getElementById('fixedLinkButton').addEventListener('click', function() {
+            // Redirect to the fixed link
+            // Replace 'fixedLinkURL' with the actual URL
+            chrome.tabs.create({ url: 'fixedLinkURL' });
+            chrome.action.setBadgeText({ text: '' }, function() {
+            console.log('Badge cleared');
+});
+
+        });
+    </script>
 </body>
 </html>

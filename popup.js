@@ -54,6 +54,9 @@ requestSoft404Urls();
 
 
 // Rest of your popup.js code for displaying other performance metrics
+chrome.action.setBadgeText({ text: '' }, function() {
+    console.log('Badge cleared');
+});
 
 
 // Call the function on popup open
