@@ -99,6 +99,10 @@ function checkRedirectTo404(effectiveUrlClean) {
 
 // Receiving message to initiate scoring
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+                                    // Rest of your popup.js code for displaying other performance metrics
+                                    chrome.action.setBadgeText({ text: '' }, function() {
+                                        console.log('Badge cleared');
+                    });
     if (message.action === 'initiateScoring') {
         console.log('Received initiateScoring message for URL:', message.url);
         checkLinkStatus(message.url).then(isDead => {
@@ -107,6 +111,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                 chrome.runtime.sendMessage({ action: 'displayPopup' });
             } else {
                 console.log('Link is alive, no action required');
+
             }
         });
         sendResponse({status: "Scoring initiated"});

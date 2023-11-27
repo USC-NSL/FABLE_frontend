@@ -30,12 +30,12 @@ function createNotification(message, title = "Notification Title") {
 
     currentNotificationId = "notification-" + (new Date()).getTime();
 
-    chrome.notifications.create(currentNotificationId, {
-        type: "basic",
-        iconUrl: "error.png", 
-        title: title, 
-        message: message, 
-    });
+    // chrome.notifications.create(currentNotificationId, {
+    //     type: "basic",
+    //     iconUrl: "error.png", 
+    //     title: title, 
+    //     message: message, 
+    // });
 
     chrome.action.setBadgeBackgroundColor({ color: [200, 0, 0, 255] }, function() {
         console.log('Badge background color set to dark red');
@@ -89,6 +89,7 @@ chrome.tabs.onRemoved.addListener(function(tabId) {
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     console.log(`[Tab Updated] Tab update for ${tabId}, Status: ${changeInfo.status}, URL: ${tab.url}`);
+    
     if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith("chrome://")) {
         if (tabStatusCodes.hasOwnProperty(tabId)) {
 
@@ -110,6 +111,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
                     console.log('Bad status code detected:', statusCode);
                     chrome.tabs.sendMessage(tabId, { action: 'displayPopup' }); // send popup message
                 } else {
+                                                        // Rest of your popup.js code for displaying other performance metrics
+                                                        chrome.action.setBadgeText({ text: '' }, function() {
+                                                            console.log('Badge cleared');
+                                        });
                     console.log('Good status code, checking for soft 404:', statusCode);
                     sendMessageWithRetry(tabId, { action: 'initiateScoring', url: tab.url });
                 }
