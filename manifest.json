@@ -21,6 +21,13 @@
         "19": "1.png",
         "38": "2.png"
       }
-    }
+    },
+    "web_accessible_resources": [
+      {
+          "resources": ["brokenlink.png"],
+          "matches": ["<all_urls>"]
+
+      }
+    ]
   }
   

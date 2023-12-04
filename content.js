@@ -99,10 +99,7 @@ function checkRedirectTo404(effectiveUrlClean) {
 
 // Receiving message to initiate scoring
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-                                    // Rest of your popup.js code for displaying other performance metrics
-                                    chrome.action.setBadgeText({ text: '' }, function() {
-                                        console.log('Badge cleared');
-                    });
+
     if (message.action === 'initiateScoring') {
         console.log('Received initiateScoring message for URL:', message.url);
         checkLinkStatus(message.url).then(isDead => {
@@ -121,48 +118,58 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 function displayPopup() {
     console.log("Content Script: Displaying popup");
 
-    const bannerDiv = document.createElement('div');
-    bannerDiv.id = "BANNERID";
+    // Check if the popup already exists to avoid duplicates
+    if (!document.getElementById('popup-container')) {
+        const popupContainer = document.createElement('div');
+        popupContainer.id = "popup-container";
 
-    bannerDiv.innerHTML = `
-    <div style="display: flex; align-items: center; height: 35px;">
-        <span style="font-size: 36px;">⚠︎</span>
-        <span style="margin-left: 10px;"><b>Sorry, this link is broken.</b> Do you want to check for a fixed link using FABLE?</span>
-        <div style="flex-grow: 1;"></div> <!-- Spacer to push buttons to the right -->
-        <div style="display: flex; align-items: center;">
-            <a href="https://www.google.com" style="background-color: #4285F4; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; outline: none; margin-right: 5px;">Go to fixed link</a>
-            <span id="closeBanner" style="cursor: pointer; margin-left: 5px;">✕</span>
-        </div>
-    </div>`;
+        // Popup HTML content with new wording and close button as 'X'
+        popupContainer.innerHTML = `
+            <div id="title-txt" style="position: relative; padding: 10px; background-color: #e51d21; color: white; border-radius: 5px 5px 0 0; overflow: hidden;">
+                404: Not Found
+                <span id="close-btn" style="cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); right: 10px; font-size: 1em; color: white;">✕</span>
+            </div>
+            <div style="padding: 10px; text-align: center;">
+                <img src="https://www.shutterstock.com/image-vector/broken-chain-symbol-change-slavery-600nw-2142272695.jpg" style="width: 150px; height: 150px;">
+                <div style="font-size: 14px; margin-top: 10px;"><b>Sorry, this link is broken.</b><br> Do you want to check for a fixed link using FABLE?</div>
+                <a href="https://www.google.com" id="archive-btn">Go to fixed link</a>
+            </div>
+        `;
 
-    // Apply styles directly in JavaScript
-    bannerDiv.style.position = 'relative';
-    bannerDiv.style.width = '100%';
-    bannerDiv.style.backgroundColor = '#F9F9F9';
-    bannerDiv.style.borderBottom = '1px solid #ccc';
-    bannerDiv.style.padding = '10px';
-    bannerDiv.style.fontSize = '17px';
-    bannerDiv.style.color = 'black';
-    bannerDiv.style.overflow = 'hidden';
-    bannerDiv.style.boxSizing = 'border-box'; // Ensure padding is included in width
-
-    // Event listener for closing the banner
-    bannerDiv.querySelector("#closeBanner").addEventListener("click", function() {
-        document.body.style.marginTop = ''; // Reset the body's margin-top
-        document.body.removeChild(bannerDiv);
-    });
-
-    if (document.body) {
-        document.body.style.marginTop = bannerDiv.offsetHeight + 'px';
-        document.body.insertBefore(bannerDiv, document.body.firstChild);
-    } else {
-        const observer = new MutationObserver(() => {
-            if (document.body) {
-                observer.disconnect();
-                document.body.style.marginTop = bannerDiv.offsetHeight + 'px';
-                document.body.insertBefore(bannerDiv, document.body.firstChild);
-            }
+        // CSS styles applied directly to the popup container
+        Object.assign(popupContainer.style, {
+            position: 'fixed',
+            zIndex: '2147483647',
+            width: '350px',
+            top: '10px',
+            right: '10px',
+            backgroundColor: 'white',
+            borderRadius: '5px',
+            boxShadow: '0 3px 5px 0 rgba(0,0,0,.3)',
+            fontFamily: `'Arial', sans-serif`,
+            fontSize: '12pt',
+            animation: 'fadein 0.8s ease-out'
         });
-        observer.observe(document.documentElement, { childList: true });
+
+        // Close button event
+        const closeButton = popupContainer.querySelector('#close-btn');
+        closeButton.addEventListener("click", function() {
+            document.body.removeChild(popupContainer);
+        });
+
+        // Archive button styling
+        const archiveButton = popupContainer.querySelector('#archive-btn');
+        Object.assign(archiveButton.style, {
+            display: 'inline-block',
+            backgroundColor: '#e51d21',
+            color: 'white',
+            textDecoration: 'none',
+            padding: '8px 15px',
+            borderRadius: '5px',
+            marginTop: '10px'
+        });
+
+        // Append the popup to the body
+        document.body.appendChild(popupContainer);
     }
 }
