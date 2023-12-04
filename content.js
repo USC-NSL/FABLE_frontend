@@ -130,8 +130,8 @@ function displayPopup() {
                 <span id="close-btn" style="cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); right: 10px; font-size: 1em; color: white;">✕</span>
             </div>
             <div style="padding: 10px; text-align: center;">
-                <img src="https://www.shutterstock.com/image-vector/broken-chain-symbol-change-slavery-600nw-2142272695.jpg" style="width: 150px; height: 150px;">
-                <div style="font-size: 14px; margin-top: 10px;"><b>Sorry, this link is broken.</b><br> Do you want to check for a fixed link using FABLE?</div>
+            <img src="${chrome.runtime.getURL('brokenlink.png')}" style="width: 185px; height: 82px;">
+            <div style="font-size: 14px; margin-top: 10px;"><b>Sorry, this link is broken.</b><br> Do you want to check for a fixed link using FABLE?</div>
                 <a href="https://www.google.com" id="archive-btn">Go to fixed link</a>
             </div>
         `;
