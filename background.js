@@ -1,3 +1,7 @@
+
+
+//-------------
+
 let redirectHistory = {};
 let tabStatusCodes = {};
 let requestStartTimes = {};
@@ -9,6 +13,23 @@ const goodHttpCodes = [
     200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
     250, 300, 301, 302, 303, 304, 305, 306, 307, 308,
 ];
+
+// background.js
+
+chrome.runtime.onInstalled.addListener(function(details) {
+    if (details.reason === 'install') {
+      // Function to be executed only once on installation
+      onExtensionInstalled();
+    }
+  });
+  
+  function onExtensionInstalled() {
+    // Perform actions specific to the extension's installation
+    console.log('Extension installed');
+    chrome.runtime.sendMessage({ action: 'getAllMappings' });
+
+    // Add your desired logic here
+  }
 
 
 chrome.webRequest.onErrorOccurred.addListener(
@@ -28,14 +49,9 @@ function createNotification(message, title = "Notification Title") {
         return; 
     }
 
-    currentNotificationId = "notification-" + (new Date()).getTime();
+    //send message with message displayPopup and URL
+    //    if (message.action === 'displayPopup' && message.URL) {
 
-    // chrome.notifications.create(currentNotificationId, {
-    //     type: "basic",
-    //     iconUrl: "error.png", 
-    //     title: title, 
-    //     message: message, 
-    // });
 
     chrome.action.setBadgeBackgroundColor({ color: [200, 0, 0, 255] }, function() {
         console.log('Badge background color set to dark red');
@@ -108,8 +124,8 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
                 // Check if status code is not in the list of good HTTP codes
                 if (!goodHttpCodes.includes(statusCode)) {
-                    console.log('Bad status code detected:', statusCode);
-                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup' }); // send popup message
+                    console.error('Bad status code detected:', statusCode);
+                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup', URL: tab.url}); // send popup message
                 } else {
                                                         // Rest of your popup.js code for displaying other performance metrics
                                                         chrome.action.setBadgeText({ text: '' }, function() {
@@ -128,8 +144,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 }
 });
 
-
-
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'displayPopupForTitle404' && sender.tab) {
         console.log('Bad status code TITLE:', statusCode);
@@ -138,8 +152,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    console.log('Bad status code SPARSE OR TITEL?:', statusCode);
-
     if ((message.action === 'displayPopupForSparseContent' || message.action === 'displayPopupForTitle404') && sender.tab) {
         chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
     }

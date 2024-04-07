@@ -7,7 +7,9 @@
       "webRequest",
       "scripting",
       "tabs",
-      "notifications"
+      "notifications",
+      "storage",
+      "activetab"
     ],
     "host_permissions": [
       "*://*/*"
