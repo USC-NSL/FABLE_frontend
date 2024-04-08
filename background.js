@@ -1,7 +1,3 @@
-
-
-//-------------
-
 let redirectHistory = {};
 let tabStatusCodes = {};
 let requestStartTimes = {};
@@ -14,30 +10,18 @@ const goodHttpCodes = [
     250, 300, 301, 302, 303, 304, 305, 306, 307, 308,
 ];
 
-// background.js
-
 chrome.runtime.onInstalled.addListener(function(details) {
     if (details.reason === 'install') {
-      // Function to be executed only once on installation
-      onExtensionInstalled();
+        chrome.runtime.sendMessage({ action: 'getAllMappings' });
     }
   });
   
-  function onExtensionInstalled() {
-    // Perform actions specific to the extension's installation
-    console.log('Extension installed');
-    chrome.runtime.sendMessage({ action: 'getAllMappings' });
-
-    // Add your desired logic here
-  }
-
-
 chrome.webRequest.onErrorOccurred.addListener(
     function(details) {
         if (details.type === "main_frame") {
             console.log("Connection error detected:", details.error);
-            const errorMessage = "Connection error detected: " + details.error; // Modify the message here
-            createNotification(errorMessage, "Click to check for a fixed link using FABLE."); // Set the title and message
+            const errorMessage = "Connection error detected: " + details.error;
+            createNotification(errorMessage, "Click to check for a fixed link using FABLE.");
         }
     },
     { urls: ["<all_urls>"] }
@@ -49,10 +33,6 @@ function createNotification(message, title = "Notification Title") {
         return; 
     }
 
-    //send message with message displayPopup and URL
-    //    if (message.action === 'displayPopup' && message.URL) {
-
-
     chrome.action.setBadgeBackgroundColor({ color: [200, 0, 0, 255] }, function() {
         console.log('Badge background color set to dark red');
     });
@@ -62,13 +42,6 @@ function createNotification(message, title = "Notification Title") {
         console.log('Badge text set to "NEW"');
     });
 }
-
-chrome.notifications.onClicked.addListener(function(clickedId) {
-    if (clickedId === currentNotificationId) {
-        chrome.tabs.create({ url: "https://www.google.com" }); 
-        chrome.notifications.clear(clickedId);
-    }
-});
 
 chrome.webRequest.onHeadersReceived.addListener(
     function(details) {
@@ -120,14 +93,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             if (chrome.runtime.lastError) {
                 console.error('Script injection failed:', chrome.runtime.lastError.message);
             } else {
-                // let statusCode = tabStatusCodes[tabId] || 0;
-
-                // Check if status code is not in the list of good HTTP codes
                 if (!goodHttpCodes.includes(statusCode)) {
                     console.error('Bad status code detected:', statusCode);
-                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup', URL: tab.url}); // send popup message
+                    chrome.tabs.sendMessage(tabId, { action: 'displayPopup', URL: tab.url});
                 } else {
-                                                        // Rest of your popup.js code for displaying other performance metrics
                                                         chrome.action.setBadgeText({ text: '' }, function() {
                                                             console.log('Badge cleared');
                                         });
@@ -142,19 +111,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         console.log(`[Tab Updated] Ignoring incomplete load or chrome URL for tab ${tabId}`);
     }
 }
-});
-
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (message.action === 'displayPopupForTitle404' && sender.tab) {
-        console.log('Bad status code TITLE:', statusCode);
-        chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
-    }
-});
-
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if ((message.action === 'displayPopupForSparseContent' || message.action === 'displayPopupForTitle404') && sender.tab) {
-        chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
-    }
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
@@ -188,35 +144,7 @@ function sendMessageWithRetry(tabId, message, retries = 5, interval = 500) {
     }
 }
 
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (message.action === 'displayPopupBasedOnScore' && sender.tab) {
-        if (message.score >= 8) { 
-            console.log('Displaying popup based on scoring');
-            chrome.tabs.sendMessage(sender.tab.id, { action: 'displayPopup' });
-        } else {
-            console.log('Heuristic score is low: page is valid');
-        }
-    }
-});
-
 let currentNotificationId = null;
-
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (message.action === 'showBrowserPopup') {
-        if (typeof message.message !== 'string') {
-            console.error('Invalid message type for showBrowserPopup:', message.message);
-            return;
-        }
-
-        if (currentNotificationId) {
-            chrome.notifications.clear(currentNotificationId, () => {
-                createNotification(message.message);
-            });
-        } else {
-            createNotification(message.message);
-        }
-    }
-});
 
 chrome.webRequest.onBeforeRequest.addListener(
     function(details) {
@@ -234,24 +162,5 @@ chrome.webRequest.onBeforeRequest.addListener(
     { urls: ["<all_urls>"], types: ["main_frame"] }
 );
 
-function clearTimerAndCheckDuration(details) {
-    let timerId = requestTimers[details.requestId];
-    if (timerId) {
-        clearTimeout(timerId);
-        delete requestTimers[details.requestId];
-    }
-}
 
-chrome.webRequest.onCompleted.addListener(clearTimerAndCheckDuration, { urls: ["<all_urls>"] });
-chrome.webRequest.onErrorOccurred.addListener(clearTimerAndCheckDuration, { urls: ["<all_urls>"] });
 
-async function checkHttpStatus(url, callback) {
-    console.log(`Checking HTTP status for url: ${url}`);
-    try {
-        const response = await fetch(url, { method: 'HEAD' });
-        callback(response.status);
-    } catch (error) {
-        console.error('HTTP Status Code Check Error:', error);
-        callback(0);
-    }
-}
