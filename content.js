@@ -25,7 +25,7 @@ function doTransform(url) {
         searchMappingsByRoot(url).then(existingMappings => {
             if (enableSavedTransformationSearch) {
                 const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
-                console.error('Debug: Checking for exact match in existing mappings');
+                // console.error('Debug: Checking for exact match in existing mappings');
                 const exactMatch = existingMappings.find(mapping => mapping.old.replace(/^https?:\/\//, '') === urlWithoutProtocol);
                 if (exactMatch) {
                     console.log('Exact match found. Skipping GPT transformation.');
@@ -80,7 +80,7 @@ function deobfuscate(obfuscated, map) {
 
 async function searchMappingsByRoot(rootUrl) {
     try {
-        console.error('Debug: Starting searchMappingsByRoot for rootUrl', rootUrl);
+        // console.error('Debug: Starting searchMappingsByRoot for rootUrl', rootUrl);
         const root = new URL(rootUrl).hostname;
 
         let currentPath = new URL(rootUrl).pathname;
@@ -317,8 +317,6 @@ async function getAllMappings() {
     }
 }
 
-
-
 function initializeContentScript() {
     window.isContentScriptReady = true;
     chrome.runtime.sendMessage({ action: 'contentScriptReady' });
@@ -392,5 +390,27 @@ function displayPopup(transformedUrl) {
         });
 
         document.body.appendChild(popupContainer);
+
+        const updateButton = document.createElement('button');
+        updateButton.id = 'update-btn';
+        updateButton.textContent = 'Update Local Database';
+        Object.assign(updateButton.style, {
+            display: 'block',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            textDecoration: 'none',
+            padding: '8px 15px',
+            borderRadius: '5px',
+            marginTop: '10px',
+            cursor: 'pointer',
+            border: 'none',
+            width: '100%'
+        });
+        updateButton.addEventListener('click', function() {
+            getAllMappings();
+            updateButton.textContent = 'Updated!';
+        });
+
+        popupContainer.appendChild(updateButton);
     }
 }

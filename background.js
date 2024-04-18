@@ -15,7 +15,7 @@ chrome.runtime.onInstalled.addListener(function(details) {
         chrome.runtime.sendMessage({ action: 'getAllMappings' });
     }
   });
-  
+
 chrome.webRequest.onErrorOccurred.addListener(
     function(details) {
         if (details.type === "main_frame") {
